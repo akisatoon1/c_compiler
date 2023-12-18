@@ -5,30 +5,7 @@
 #include <ctype.h>
 #include <string.h>
 
-void error(char *fmt, ...)
-{
-    va_list ap;
-    va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
-    fprintf(stderr, "\n");
-    exit(1);
-}
-
 char *user_input;
-
-void error_at(char *loc, char *fmt, ...)
-{
-    va_list ap;
-    va_start(ap, fmt);
-
-    int pos = loc - user_input;
-    fprintf(stderr, "%s\n", user_input);
-    fprintf(stderr, "%*s\n", pos, " ");
-    fprintf(stderr, "^");
-    vfprintf(stderr, fmt, ap);
-    fprintf(stderr, "\n");
-    exit(1);
-}
 
 typedef enum
 {
@@ -48,6 +25,86 @@ struct Token
 };
 
 Token *token;
+
+typedef enum
+{
+    ND_ADD,
+    ND_SUB,
+    ND_MUL,
+    ND_DIV,
+    ND_NUM,
+} NodeKind;
+
+typedef struct Node Node;
+
+struct Node
+{
+    NodeKind kind;
+    Node *lhs;
+    Node *rhs;
+    int val;
+};
+
+void gen(Node *);
+Node *primary();
+Node *mul();
+Node *expr();
+Node *new_node_num(int);
+Node *new_node(NodeKind, Node *, Node *);
+Token *tokenize(char *p);
+Token *new_token(TokenKind, Token *, char *);
+bool at_eof();
+int expect_number();
+void expect(char);
+bool consume(char);
+void error_at(char *, char *, ...);
+void error(char *, ...);
+
+int main(int argc, char **argv)
+{
+    if (argc != 2)
+    {
+        error("引数の個数が正しくありません");
+        return 1;
+    }
+
+    user_input = argv[1];
+    token = tokenize(user_input);
+    Node *node = expr();
+
+    printf(".intel_syntax noprefix\n");
+    printf(".globl main\n");
+    printf("main:\n");
+
+    gen(node);
+
+    printf("    pop rax\n");
+    printf("    ret\n");
+    return 0;
+}
+
+void error(char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+    exit(1);
+}
+
+void error_at(char *loc, char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+
+    int pos = loc - user_input;
+    fprintf(stderr, "%s\n", user_input);
+    fprintf(stderr, "%*s\n", pos, " ");
+    fprintf(stderr, "^");
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+    exit(1);
+}
 
 bool consume(char op)
 {
@@ -105,7 +162,7 @@ Token *tokenize(char *p)
             p++;
             continue;
         }
-        if (*p == '+' || *p == '-')
+        if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == ')' || *p == '(')
         {
             cur = new_token(TK_RESERVED, cur, p++);
             continue;
@@ -122,25 +179,6 @@ Token *tokenize(char *p)
     new_token(TK_EOF, cur, p);
     return head.next;
 }
-
-typedef enum
-{
-    ND_ADD,
-    ND_SUB,
-    ND_MUL,
-    ND_DIV,
-    ND_NUM,
-} NodeKind;
-
-typedef struct Node Node;
-
-struct Node
-{
-    NodeKind kind;
-    Node *lhs;
-    Node *rhs;
-    int val;
-};
 
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs)
 {
@@ -164,13 +202,13 @@ Node *expr()
     Node *node = mul();
     for (;;)
     {
-        if (cosume("+"))
+        if (consume('+'))
         {
-            Node *node = new_node(ND_ADD, node, mul());
+            node = new_node(ND_ADD, node, mul());
         }
-        else if (consume("-"))
+        else if (consume('-'))
         {
-            Node *node = new_node(ND_SUB, node, mul());
+            node = new_node(ND_SUB, node, mul());
         }
         else
         {
@@ -184,13 +222,13 @@ Node *mul()
     Node *node = primary();
     for (;;)
     {
-        if (cosume("*"))
+        if (consume('*'))
         {
-            Node *node = new_node(ND_MUL, node, primary());
+            node = new_node(ND_MUL, node, primary());
         }
-        else if (consume("/"))
+        else if (consume('/'))
         {
-            Node *node = new_node(ND_DIV, node, primary());
+            node = new_node(ND_DIV, node, primary());
         }
         else
         {
@@ -201,40 +239,47 @@ Node *mul()
 
 Node *primary()
 {
-    if (consume("("))
+    if (consume('('))
     {
         Node *node = expr();
-        expect(")");
+        expect(')');
         return node;
     }
     return new_node_num(expect_number());
 }
 
-int main(int argc, char **argv)
+void gen(Node *node)
 {
-    if (argc != 2)
+    if (node->kind == ND_NUM)
     {
-        error("引数の個数が正しくありません");
-        return 1;
+        printf("    push %d\n", node->val);
+        return;
     }
 
-    user_input = argv[1];
-    token = tokenize(argv[1]);
-    printf(".intel_syntax noprefix\n");
-    printf(".globl main\n");
-    printf("main:\n");
-    printf("    mov rax, %d\n", expect_number());
+    gen(node->lhs);
+    gen(node->rhs);
+    printf("    pop rdi\n");
+    printf("    pop rax\n");
 
-    while (!at_eof())
+    switch (node->kind)
     {
-        if (consume('+'))
-        {
-            printf("    add rax, %d\n", expect_number());
-            continue;
-        }
-        expect('-');
-        printf("    sub rax, %d\n", expect_number());
+    case ND_ADD:
+        printf("    add rax, rdi\n");
+        break;
+    case ND_SUB:
+        printf("    sub rax, rdi\n");
+        break;
+    case ND_MUL:
+        printf("    imul rax, rdi\n");
+        break;
+    case ND_DIV:
+        printf("    cqo\n");
+        printf("    idiv rdi\n");
+        break;
+    default:
+        break;
     }
-    printf("    ret\n");
-    return 0;
+
+    printf("    push rax\n");
+    return;
 }
