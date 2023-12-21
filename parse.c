@@ -35,7 +35,7 @@ Token *tokenize(char *p)
             continue;
         }
 
-        if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == ')' || *p == '(' || *p == '>' || *p == '<' || *p == ';')
+        if (strchr("+-*/()<>;=", *p))
         {
             cur = new_token(TK_RESERVED, cur, p++, 1);
             continue;
@@ -53,7 +53,7 @@ Token *tokenize(char *p)
             cur->len = p - q;
             continue;
         }
-        error("トークナイズできません");
+        error("トークナイズできません。*p: %c", *p);
     }
 
     new_token(TK_EOF, cur, p, 0);
