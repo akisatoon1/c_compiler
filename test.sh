@@ -16,7 +16,7 @@ assert() {
   fi
 }
 
-assert 3 'a = 1;b = 2;a + b;'
+assert 3 'foo = 1;bar = 2;foo + bar;'
 assert 0 'f=7;r=5+2;f!=r;'
 assert 42 'd=e=5;y=5*3+2;d*e+y;'
 assert 0 '0;'

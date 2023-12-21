@@ -49,8 +49,23 @@ struct Node
 
 extern Node *code[100];
 
+typedef struct LVar LVar;
+
+struct LVar
+{
+    LVar *next;
+    char *name;
+    int len;
+    int offset;
+};
+
+extern LVar *locals;
+
+// generate
 void gen(Node *node);
 void gen_lval(Node *node);
+
+// ENBF
 void program();
 Node *stmt();
 Node *expr();
@@ -61,14 +76,27 @@ Node *add();
 Node *mul();
 Node *unary();
 Node *primary();
+
+// create node of tree
 Node *new_node_num(int);
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
+
+// tokenize
 Token *tokenize(char *p);
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
+bool is_ident1(char c);
+bool is_ident2(char c);
+
+// use token
 bool at_eof();
 int expect_number();
 void expect(char *op);
 bool consume(char *op);
 Token *consume_ident();
+
+// error
 void error_at(char *, char *, ...);
 void error(char *, ...);
+
+// var
+LVar *find_lvar(Token *tok);

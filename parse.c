@@ -6,106 +6,6 @@
 #include <string.h>
 #include "9cc.h"
 
-Token *new_token(TokenKind kind, Token *cur, char *str, int len)
-{
-    Token *tok = calloc(1, sizeof(Token));
-    tok->kind = kind;
-    tok->str = str;
-    tok->len = len;
-    cur->next = tok;
-    return tok;
-}
-
-Token *tokenize(char *p)
-{
-    Token head;
-    head.next = NULL;
-    Token *cur = &head;
-    while (*p)
-    {
-        if (isspace(*p))
-        {
-            p++;
-            continue;
-        }
-        if (strncmp(p, ">=", 2) == 0 || strncmp(p, "<=", 2) == 0 || strncmp(p, "==", 2) == 0 || strncmp(p, "!=", 2) == 0)
-        {
-            cur = new_token(TK_RESERVED, cur, p, 2);
-            p += 2;
-            continue;
-        }
-
-        if (strchr("+-*/()<>;=", *p))
-        {
-            cur = new_token(TK_RESERVED, cur, p++, 1);
-            continue;
-        }
-        if ('a' <= *p && *p <= 'z')
-        {
-            cur = new_token(TK_IDENT, cur, p++, 1);
-            continue;
-        }
-        if (isdigit(*p))
-        {
-            cur = new_token(TK_NUM, cur, p, 0);
-            char *q = p;
-            cur->val = strtol(p, &p, 10);
-            cur->len = p - q;
-            continue;
-        }
-        error("トークナイズできません。*p: %c", *p);
-    }
-
-    new_token(TK_EOF, cur, p, 0);
-    return head.next;
-}
-
-bool consume(char *op)
-{
-    if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(op, token->str, token->len))
-    {
-        return false;
-    }
-    token = token->next;
-    return true;
-}
-
-Token *consume_ident()
-{
-    if (token->kind != TK_IDENT || token->str[0] < 'a' || token->str[0] > 'z')
-    {
-        return NULL;
-    }
-    Token *ident_token = token;
-    token = token->next;
-    return ident_token;
-}
-
-void expect(char *op)
-{
-    if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(op, token->str, token->len))
-    {
-        error("'%s'ではありません", op);
-    }
-    token = token->next;
-}
-
-int expect_number()
-{
-    if (token->kind != TK_NUM)
-    {
-        error_at(token->str, "数ではありません");
-    }
-    int val = token->val;
-    token = token->next;
-    return val;
-}
-
-bool at_eof()
-{
-    return (token->kind == TK_EOF);
-}
-
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs)
 {
     Node *node = calloc(1, sizeof(Node));
@@ -269,8 +169,34 @@ Node *primary()
     {
         Node *node = calloc(1, sizeof(Node));
         node->kind = ND_LVAR;
-        node->offset = (tok->str[0] - 'a' + 1) * 8;
+        LVar *lvar = find_lvar(tok);
+        if (lvar)
+        {
+            node->offset = lvar->offset;
+        }
+        else
+        {
+            lvar = calloc(1, sizeof(LVar));
+            lvar->next = locals;
+            lvar->name = tok->str;
+            lvar->len = tok->len;
+            lvar->offset = locals->offset + 8;
+            node->offset = lvar->offset;
+            locals = lvar;
+        }
         return node;
     }
     return new_node_num(expect_number());
+}
+
+LVar *find_lvar(Token *tok)
+{
+    for (LVar *var = locals; var; var = var->next)
+    {
+        if (var->len == tok->len && !memcmp(var->name, tok->str, var->len))
+        {
+            return var;
+        }
+    }
+    return NULL;
 }
