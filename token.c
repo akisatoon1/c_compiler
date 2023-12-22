@@ -16,6 +16,11 @@ bool is_ident2(char c)
     return is_ident1(c) || ('0' <= c && c <= '9');
 }
 
+bool is_alnum(char c)
+{
+    return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9') || (c == '_');
+}
+
 Token *new_token(TokenKind kind, Token *cur, char *str, int len)
 {
     Token *tok = calloc(1, sizeof(Token));
@@ -47,8 +52,18 @@ Token *tokenize(char *p)
         if (strchr("+-*/()<>;=", *p))
         {
             cur = new_token(TK_RESERVED, cur, p++, 1);
+            // fprintf(stderr, "tokenize reserved. cur->str: '%s'\n", cur->str);
             continue;
         }
+
+        if (!strncmp(p, "return", 6) && !is_alnum(p[6]))
+        {
+            cur = new_token(TK_RETURN, cur, p, 6);
+            // fprintf(stderr, "tokenize return. cur->str: '%s'\n", cur->str);
+            p += 6;
+            continue;
+        }
+
         if (is_ident1(*p))
         {
             char *q = p;
@@ -66,6 +81,7 @@ Token *tokenize(char *p)
             char *q = p;
             cur->val = strtol(p, &p, 10);
             cur->len = p - q;
+            // fprintf(stderr, "tokenize digit. cur->str: '%s'\n", cur->str);
             continue;
         }
         error("トークナイズできません。*p: %c", *p);
@@ -94,6 +110,17 @@ Token *consume_ident()
     Token *ident_token = token;
     token = token->next;
     return ident_token;
+}
+
+bool consume_return()
+{
+    if (token->kind != TK_RETURN || strncmp(token->str, "return", 6))
+    {
+        // printf("tokenkind: %d\n", token->kind);
+        return false;
+    }
+    token = token->next;
+    return true;
 }
 
 void expect(char *op)

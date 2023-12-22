@@ -35,7 +35,17 @@ void program()
 
 Node *stmt()
 {
-    Node *node = expr();
+    Node *node;
+    if (consume_return())
+    {
+        node = calloc(1, sizeof(Node));
+        node->kind = ND_RETURN;
+        node->lhs = expr();
+    }
+    else
+    {
+        node = expr();
+    }
     expect(";");
     return node;
 }
@@ -151,6 +161,7 @@ Node *unary()
     }
     if (consume("-"))
     {
+        // fprintf(stderr, "in unary consume('-')\n");
         return new_node(ND_SUB, new_node_num(0), primary());
     }
     return primary();

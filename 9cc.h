@@ -5,6 +5,7 @@ typedef enum
     TK_RESERVED, // 記号
     TK_IDENT,    // 識別子
     TK_NUM,      // 整数トークン
+    TK_RETURN,   // return
     TK_EOF       // 入力の終わりを示すトークン
 } TokenKind;
 
@@ -33,6 +34,7 @@ typedef enum
     ND_LE,     // <=
     ND_ASSIGN, // =
     ND_LVAR,   // ローカル変数
+    ND_RETURN, // return
     ND_NUM,    // Integer
 } NodeKind;
 
@@ -86,6 +88,7 @@ Token *tokenize(char *p);
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 bool is_ident1(char c);
 bool is_ident2(char c);
+bool is_alnum(char c);
 
 // use token
 bool at_eof();
@@ -93,6 +96,7 @@ int expect_number();
 void expect(char *op);
 bool consume(char *op);
 Token *consume_ident();
+bool consume_return();
 
 // error
 void error_at(char *, char *, ...);

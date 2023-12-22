@@ -36,12 +36,14 @@ int main(int argc, char **argv)
     for (int i = 0; code[i]; i++)
     {
         gen(code[i]);
-        printf("    pop rax\n");
+        // printf("    pop rax\n");
     }
 
+    /*
     printf("    mov rsp, rbp\n");
     printf("    pop rbp\n");
     printf("    ret\n");
+    */
     return 0;
 }
 
@@ -65,5 +67,6 @@ void error_at(char *loc, char *fmt, ...)
     fprintf(stderr, "^");
     vfprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");
+    fprintf(stderr, "tok->str: '%s'\n", token->str);
     exit(1);
 }
