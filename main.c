@@ -12,9 +12,9 @@ Node *code[100];
 // 変数のリスト
 LVar *locals;
 
-// if文用ラベルid
+// ラベルid
+int Lbegin = 0;
 int Lend = 0;
-// else文用ラベルid
 int Lelse = 0;
 
 int main(int argc, char **argv)

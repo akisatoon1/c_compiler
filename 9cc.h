@@ -72,6 +72,7 @@ extern LVar *locals;
 
 extern int Lend;
 extern int Lelse;
+extern int Lbegin;
 
 // generate
 void gen(Node *node);

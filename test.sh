@@ -16,6 +16,9 @@ assert() {
   fi
 }
 
+assert 6 'i=0; while(i<5) i=i+2; return i;'
+assert 5 'i=0;while(i<5)i=i+1;return i;'
+
 assert 2 'if (1) return 2; else return 3;'
 assert 3 'if (0) return 2; else return 3;'
 assert 1 'foo=0; if(0==0) foo=1; return foo;'
