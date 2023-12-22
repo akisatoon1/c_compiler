@@ -12,6 +12,11 @@ Node *code[100];
 // 変数のリスト
 LVar *locals;
 
+// if文用ラベルid
+int Lend = 0;
+// else文用ラベルid
+int Lelse = 0;
+
 int main(int argc, char **argv)
 {
     if (argc != 2)

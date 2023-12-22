@@ -16,6 +16,11 @@ assert() {
   fi
 }
 
+assert 2 'if (1) return 2; else return 3;'
+assert 3 'if (0) return 2; else return 3;'
+assert 1 'foo=0; if(0==0) foo=1; return foo;'
+assert 0 'foo=0; if(0!=0) foo=1; return foo;'
+
 assert 0 'return 0;'
 assert 42 'return 42;'
 assert 21 'return 5+20-4;'

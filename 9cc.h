@@ -5,6 +5,7 @@ typedef enum
     TK_RESERVED, // 記号
     TK_IDENT,    // 識別子
     TK_NUM,      // 整数トークン
+    TK_CONTROLS, // 制御文字列
     TK_RETURN,   // return
     TK_EOF       // 入力の終わりを示すトークン
 } TokenKind;
@@ -35,6 +36,9 @@ typedef enum
     ND_ASSIGN, // =
     ND_LVAR,   // ローカル変数
     ND_RETURN, // return
+    ND_IF,     // if
+    ND_WHILE,  // while
+    ND_FOR,    // for
     ND_NUM,    // Integer
 } NodeKind;
 
@@ -45,6 +49,9 @@ struct Node
     NodeKind kind;
     Node *lhs;
     Node *rhs;
+    Node *cond;
+    Node *then;
+    Node *_else;
     int val;
     int offset;
 };
@@ -62,6 +69,9 @@ struct LVar
 };
 
 extern LVar *locals;
+
+extern int Lend;
+extern int Lelse;
 
 // generate
 void gen(Node *node);
@@ -90,12 +100,16 @@ bool is_ident1(char c);
 bool is_ident2(char c);
 bool is_alnum(char c);
 
+// キーワードsかどうか判定する。
+bool is_keyword(char *p, char *s);
+
 // use token
 bool at_eof();
 int expect_number();
 void expect(char *op);
 bool consume(char *op);
 Token *consume_ident();
+bool consume_controls(char *s);
 bool consume_return();
 
 // error
