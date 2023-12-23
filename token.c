@@ -64,7 +64,7 @@ bool consume_return()
     return true;
 }
 
-void expect(char *op)
+void expect_reserved(char *op)
 {
     if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(op, token->str, token->len))
     {

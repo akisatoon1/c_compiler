@@ -41,15 +41,30 @@ Node *stmt()
         node = calloc(1, sizeof(Node));
         node->kind = ND_RETURN;
         node->lhs = expr();
-        expect(";");
+        expect_reserved(";");
+    }
+    else if (consume_reserved("{"))
+    {
+        Node head;
+        head.next = NULL;
+        Node *cur = &head;
+        while (!consume_reserved("}"))
+        {
+            cur->next = stmt();
+            cur = cur->next;
+        }
+        cur->next = NULL;
+        node = calloc(1, sizeof(Node));
+        node->kind = ND_BLOCK;
+        node->body = head.next;
     }
     else if (consume_controls("if"))
     {
-        expect("(");
+        expect_reserved("(");
         node = calloc(1, sizeof(Node));
         node->kind = ND_IF;
         node->cond = expr();
-        expect(")");
+        expect_reserved(")");
         node->then = stmt();
         if (consume_controls("else"))
         {
@@ -62,16 +77,16 @@ Node *stmt()
     }
     else if (consume_controls("while"))
     {
-        expect("(");
+        expect_reserved("(");
         node = calloc(1, sizeof(Node));
         node->kind = ND_WHILE;
         node->cond = expr();
-        expect(")");
+        expect_reserved(")");
         node->then = stmt();
     }
     else if (consume_controls("for"))
     {
-        expect("(");
+        expect_reserved("(");
         node = calloc(1, sizeof(Node));
         node->kind = ND_FOR;
         if (consume_reserved(";"))
@@ -81,7 +96,7 @@ Node *stmt()
         else
         {
             node->init = expr();
-            expect(";");
+            expect_reserved(";");
         }
         if (consume_reserved(";"))
         {
@@ -90,7 +105,7 @@ Node *stmt()
         else
         {
             node->cond = expr();
-            expect(";");
+            expect_reserved(";");
         }
         if (consume_reserved(")"))
         {
@@ -99,14 +114,14 @@ Node *stmt()
         else
         {
             node->inc = expr();
-            expect(")");
+            expect_reserved(")");
         }
         node->then = stmt();
     }
     else
     {
         node = expr();
-        expect(";");
+        expect_reserved(";");
     }
     return node;
 }
@@ -233,7 +248,7 @@ Node *primary()
     if (consume_reserved("("))
     {
         Node *node = expr();
-        expect(")");
+        expect_reserved(")");
         return node;
     }
     Token *tok = consume_ident();

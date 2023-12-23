@@ -16,6 +16,10 @@ assert() {
   fi
 }
 
+assert 11 '{ans1=1; ans2=0; for (i=0;i<3;i=i+1) {ans1=ans1*2; ans2=ans2+1; } return ans1+ans2;}'
+assert 0 '{return 0;}'
+
+assert 60 'sum=0; for (i=10; i<15; i=i+1) sum = sum + i; return sum;'
 assert 15 'ans=0;for(i=0;i<15;i=i+1)ans=ans+1;return ans;'
 assert 5 'ans=0;for(i=0;i<5;i=i+1)ans=ans+1;return ans;'
 

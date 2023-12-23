@@ -39,6 +39,7 @@ typedef enum
     ND_IF,     // if
     ND_WHILE,  // while
     ND_FOR,    // for
+    ND_BLOCK,  //{}
     ND_NUM,    // Integer
 } NodeKind;
 
@@ -53,7 +54,9 @@ struct Node
     Node *then;
     Node *_else;
     Node *init;
-    Node *inc; // increment
+    Node *inc;  // increment
+    Node *body; //{...}
+    Node *next;
     int val;
     int offset;
 };
@@ -109,7 +112,7 @@ bool is_keyword(char *p, char *s);
 // use token
 bool at_eof();
 int expect_number();
-void expect(char *op);
+void expect_reserved(char *op);
 bool consume_reserved(char *op);
 Token *consume_ident();
 bool consume_controls(char *s);

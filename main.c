@@ -12,11 +12,6 @@ Node *code[100];
 // 変数のリスト
 LVar *locals;
 
-// ラベルid
-int Lbegin = 0;
-int Lend = 0;
-int Lelse = 0;
-
 int main(int argc, char **argv)
 {
     if (argc != 2)
@@ -41,14 +36,9 @@ int main(int argc, char **argv)
     for (int i = 0; code[i]; i++)
     {
         gen(code[i]);
-        // printf("    pop rax\n");
+        printf("    pop rax\n");
     }
 
-    /*
-    printf("    mov rsp, rbp\n");
-    printf("    pop rbp\n");
-    printf("    ret\n");
-    */
     return 0;
 }
 

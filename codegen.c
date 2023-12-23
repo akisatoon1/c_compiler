@@ -6,6 +6,11 @@
 #include <string.h>
 #include "9cc.h"
 
+// ラベルid
+int Lbegin = 0;
+int Lend = 0;
+int Lelse = 0;
+
 void gen_lval(Node *node)
 {
     if (node->kind != ND_LVAR)
@@ -54,7 +59,7 @@ void gen(Node *node)
             printf("    je .Lelse%d\n", Lelse);
             gen(node->then);
             printf("    jmp .Lend%d\n", Lend);
-            printf("    .Lelse%d:\n", Lelse);
+            printf(".Lelse%d:\n", Lelse);
             gen(node->_else);
             Lelse++;
         }
@@ -63,18 +68,18 @@ void gen(Node *node)
             printf("    je .Lend%d\n", Lend);
             gen(node->then);
         }
-        printf("    .Lend%d:\n", Lend);
+        printf(".Lend%d:\n", Lend);
         Lend++;
         return;
     case ND_WHILE:
-        printf("    .Lbegin%d:\n", Lbegin);
+        printf(".Lbegin%d:\n", Lbegin);
         gen(node->cond);
         printf("    pop rax\n");
         printf("    cmp rax, 0\n");
         printf("    je .Lend%d\n", Lend);
         gen(node->then);
         printf("    jmp .Lbegin%d\n", Lbegin);
-        printf("    .Lend%d:\n", Lend);
+        printf(".Lend%d:\n", Lend);
         Lend++;
         Lbegin++;
         return;
@@ -83,7 +88,7 @@ void gen(Node *node)
         {
             gen(node->init);
         }
-        printf("    .Lbegin%d:\n", Lbegin);
+        printf(".Lbegin%d:\n", Lbegin);
         if (node->cond)
         {
             gen(node->cond);
@@ -101,9 +106,16 @@ void gen(Node *node)
             gen(node->inc);
         }
         printf("    jmp .Lbegin%d\n", Lbegin);
-        printf("    .Lend%d:\n", Lend);
+        printf(".Lend%d:\n", Lend);
         Lbegin++;
         Lend++;
+        return;
+    case ND_BLOCK:
+        for (Node *n = node->body; n; n = n->next)
+        {
+            gen(n);
+            printf("    pop rax\n");
+        }
         return;
     default:
         break;
