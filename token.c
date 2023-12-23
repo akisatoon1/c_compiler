@@ -23,7 +23,7 @@ bool is_alnum(char c)
     return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9') || (c == '_');
 }
 
-bool consume(char *op)
+bool consume_reserved(char *op)
 {
     if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(op, token->str, token->len))
     {

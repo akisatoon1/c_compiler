@@ -49,9 +49,11 @@ struct Node
     NodeKind kind;
     Node *lhs;
     Node *rhs;
-    Node *cond;
+    Node *cond; // condition
     Node *then;
     Node *_else;
+    Node *init;
+    Node *inc; // increment
     int val;
     int offset;
 };
@@ -108,7 +110,7 @@ bool is_keyword(char *p, char *s);
 bool at_eof();
 int expect_number();
 void expect(char *op);
-bool consume(char *op);
+bool consume_reserved(char *op);
 Token *consume_ident();
 bool consume_controls(char *s);
 bool consume_return();

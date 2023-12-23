@@ -71,6 +71,37 @@ Node *stmt()
     }
     else if (consume_controls("for"))
     {
+        expect("(");
+        node = calloc(1, sizeof(Node));
+        node->kind = ND_FOR;
+        if (consume_reserved(";"))
+        {
+            node->init = NULL;
+        }
+        else
+        {
+            node->init = expr();
+            expect(";");
+        }
+        if (consume_reserved(";"))
+        {
+            node->cond = NULL;
+        }
+        else
+        {
+            node->cond = expr();
+            expect(";");
+        }
+        if (consume_reserved(")"))
+        {
+            node->inc = NULL;
+        }
+        else
+        {
+            node->inc = expr();
+            expect(")");
+        }
+        node->then = stmt();
     }
     else
     {
@@ -88,7 +119,7 @@ Node *expr()
 Node *assign()
 {
     Node *node = equality();
-    if (consume("="))
+    if (consume_reserved("="))
     {
         node = new_node(ND_ASSIGN, node, assign());
     }
@@ -100,11 +131,11 @@ Node *equality()
     Node *node = relational();
     for (;;)
     {
-        if (consume("=="))
+        if (consume_reserved("=="))
         {
             node = new_node(ND_EQ, node, relational());
         }
-        else if (consume("!="))
+        else if (consume_reserved("!="))
         {
             node = new_node(ND_NE, node, relational());
         }
@@ -120,19 +151,19 @@ Node *relational()
     Node *node = add();
     for (;;)
     {
-        if (consume("<="))
+        if (consume_reserved("<="))
         {
             node = new_node(ND_LE, node, add());
         }
-        else if (consume(">="))
+        else if (consume_reserved(">="))
         {
             node = new_node(ND_LE, add(), node);
         }
-        else if (consume("<"))
+        else if (consume_reserved("<"))
         {
             node = new_node(ND_LT, node, add());
         }
-        else if (consume(">"))
+        else if (consume_reserved(">"))
         {
             node = new_node(ND_LT, add(), node);
         }
@@ -148,11 +179,11 @@ Node *add()
     Node *node = mul();
     for (;;)
     {
-        if (consume("+"))
+        if (consume_reserved("+"))
         {
             node = new_node(ND_ADD, node, mul());
         }
-        else if (consume("-"))
+        else if (consume_reserved("-"))
         {
             node = new_node(ND_SUB, node, mul());
         }
@@ -168,11 +199,11 @@ Node *mul()
     Node *node = unary();
     for (;;)
     {
-        if (consume("*"))
+        if (consume_reserved("*"))
         {
             node = new_node(ND_MUL, node, unary());
         }
-        else if (consume("/"))
+        else if (consume_reserved("/"))
         {
             node = new_node(ND_DIV, node, unary());
         }
@@ -185,13 +216,13 @@ Node *mul()
 
 Node *unary()
 {
-    if (consume("+"))
+    if (consume_reserved("+"))
     {
         return primary();
     }
-    if (consume("-"))
+    if (consume_reserved("-"))
     {
-        // fprintf(stderr, "in unary consume('-')\n");
+        // fprintf(stderr, "in unary consume_reserved('-')\n");
         return new_node(ND_SUB, new_node_num(0), primary());
     }
     return primary();
@@ -199,7 +230,7 @@ Node *unary()
 
 Node *primary()
 {
-    if (consume("("))
+    if (consume_reserved("("))
     {
         Node *node = expr();
         expect(")");

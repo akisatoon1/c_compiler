@@ -16,6 +16,9 @@ assert() {
   fi
 }
 
+assert 15 'ans=0;for(i=0;i<15;i=i+1)ans=ans+1;return ans;'
+assert 5 'ans=0;for(i=0;i<5;i=i+1)ans=ans+1;return ans;'
+
 assert 6 'i=0; while(i<5) i=i+2; return i;'
 assert 5 'i=0;while(i<5)i=i+1;return i;'
 
