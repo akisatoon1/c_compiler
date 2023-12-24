@@ -237,7 +237,6 @@ Node *unary()
     }
     if (consume_reserved("-"))
     {
-        // fprintf(stderr, "in unary consume_reserved('-')\n");
         return new_node(ND_SUB, new_node_num(0), primary());
     }
     return primary();
@@ -255,21 +254,30 @@ Node *primary()
     if (tok)
     {
         Node *node = calloc(1, sizeof(Node));
-        node->kind = ND_LVAR;
-        LVar *lvar = find_lvar(tok);
-        if (lvar)
+        if (consume_reserved("("))
         {
-            node->offset = lvar->offset;
+            node->kind = ND_FUNCCALL;
+            node->funcname = trim(tok->str, tok->len);
+            expect_reserved(")");
         }
         else
         {
-            lvar = calloc(1, sizeof(LVar));
-            lvar->next = locals;
-            lvar->name = tok->str;
-            lvar->len = tok->len;
-            lvar->offset = locals->offset + 8;
-            node->offset = lvar->offset;
-            locals = lvar;
+            node->kind = ND_LVAR;
+            LVar *lvar = find_lvar(tok);
+            if (lvar)
+            {
+                node->offset = lvar->offset;
+            }
+            else
+            {
+                lvar = calloc(1, sizeof(LVar));
+                lvar->next = locals;
+                lvar->name = tok->str;
+                lvar->len = tok->len;
+                lvar->offset = locals->offset + 8;
+                node->offset = lvar->offset;
+                locals = lvar;
+            }
         }
         return node;
     }
@@ -286,4 +294,16 @@ LVar *find_lvar(Token *tok)
         }
     }
     return NULL;
+}
+
+char *trim(char *s, int size_t)
+{
+    char *ss = calloc(size_t + 1, sizeof(char));
+    int i;
+    for (i = 0; i < size_t; i++)
+    {
+        ss[i] = s[i];
+    }
+    ss[i] = '\0';
+    return ss;
 }

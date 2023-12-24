@@ -58,15 +58,18 @@ void gen(Node *node)
         {
             printf("    je .Lelse%d\n", Lelse);
             gen(node->then);
+            printf("    pop rax\n");
             printf("    jmp .Lend%d\n", Lend);
             printf(".Lelse%d:\n", Lelse);
             gen(node->_else);
+            printf("    pop rax\n");
             Lelse++;
         }
         else
         {
             printf("    je .Lend%d\n", Lend);
             gen(node->then);
+            printf("    pop rax\n");
         }
         printf(".Lend%d:\n", Lend);
         Lend++;
@@ -78,6 +81,7 @@ void gen(Node *node)
         printf("    cmp rax, 0\n");
         printf("    je .Lend%d\n", Lend);
         gen(node->then);
+        printf("    pop rax\n");
         printf("    jmp .Lbegin%d\n", Lbegin);
         printf(".Lend%d:\n", Lend);
         Lend++;
@@ -87,6 +91,7 @@ void gen(Node *node)
         if (node->init)
         {
             gen(node->init);
+            printf("    pop rax\n");
         }
         printf(".Lbegin%d:\n", Lbegin);
         if (node->cond)
@@ -101,9 +106,11 @@ void gen(Node *node)
         printf("    cmp rax, 0\n");
         printf("    je .Lend%d\n", Lend);
         gen(node->then);
+        printf("    pop rax\n");
         if (node->inc)
         {
             gen(node->inc);
+            printf("    pop rax\n");
         }
         printf("    jmp .Lbegin%d\n", Lbegin);
         printf(".Lend%d:\n", Lend);
@@ -116,6 +123,9 @@ void gen(Node *node)
             gen(n);
             printf("    pop rax\n");
         }
+        return;
+    case ND_FUNCCALL:
+        printf("    call %s\n", node->funcname);
         return;
     default:
         break;

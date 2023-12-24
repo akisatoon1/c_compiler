@@ -25,22 +25,23 @@ extern Token *token;
 
 typedef enum
 {
-    ND_ADD,    // +
-    ND_SUB,    // -
-    ND_MUL,    // *
-    ND_DIV,    // /
-    ND_EQ,     // ==
-    ND_NE,     // !=
-    ND_LT,     // <
-    ND_LE,     // <=
-    ND_ASSIGN, // =
-    ND_LVAR,   // ローカル変数
-    ND_RETURN, // return
-    ND_IF,     // if
-    ND_WHILE,  // while
-    ND_FOR,    // for
-    ND_BLOCK,  //{}
-    ND_NUM,    // Integer
+    ND_ADD,      // +
+    ND_SUB,      // -
+    ND_MUL,      // *
+    ND_DIV,      // /
+    ND_EQ,       // ==
+    ND_NE,       // !=
+    ND_LT,       // <
+    ND_LE,       // <=
+    ND_ASSIGN,   // =
+    ND_LVAR,     // ローカル変数
+    ND_RETURN,   // return
+    ND_IF,       // if
+    ND_WHILE,    // while
+    ND_FOR,      // for
+    ND_BLOCK,    //{}
+    ND_FUNCCALL, // call function
+    ND_NUM,      // Integer
 } NodeKind;
 
 typedef struct Node Node;
@@ -57,6 +58,8 @@ struct Node
     Node *inc;  // increment
     Node *body; //{...}
     Node *next;
+    char *funcname;
+    Node *args; // arguments
     int val;
     int offset;
 };
@@ -124,3 +127,6 @@ void error(char *, ...);
 
 // var
 LVar *find_lvar(Token *tok);
+
+// trim
+char *trim(char *s, int size_t);
