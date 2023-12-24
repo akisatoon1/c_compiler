@@ -31,6 +31,7 @@ int main(int argc, char **argv)
 
     printf("    push rbp\n");
     printf("    mov rbp, rsp\n");
+    // rspを16byte整列にalignしてない
     printf("    sub rsp, 208\n");
 
     for (int i = 0; code[i]; i++)

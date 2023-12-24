@@ -11,6 +11,8 @@ int Lbegin = 0;
 int Lend = 0;
 int Lelse = 0;
 
+char *argreg[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+
 void gen_lval(Node *node)
 {
     if (node->kind != ND_LVAR)
@@ -125,6 +127,18 @@ void gen(Node *node)
         }
         return;
     case ND_FUNCCALL:
+        int nargs = 0;
+        for (Node *arg = node->args; arg; arg = arg->next)
+        {
+            gen(arg);
+            nargs++;
+        }
+        for (int i = nargs - 1; i >= 0; i--)
+        {
+            printf("    pop %s\n", argreg[i]);
+        }
+        // mov rax, 0
+        // rspを16byte整列にalignしてない
         printf("    call %s\n", node->funcname);
         return;
     default:

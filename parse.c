@@ -258,6 +258,7 @@ Node *unary()
 
 // primary = num
 //         | ident ("(" ")")?
+//         | ident "(" expr ("," expr)* ")"
 //         | "(" expr ")"
 Node *primary()
 {
@@ -273,9 +274,16 @@ Node *primary()
         Node *node = calloc(1, sizeof(Node));
         if (consume_reserved("("))
         {
+            Node head = {};
+            Node *cur = &head;
             node->kind = ND_FUNCCALL;
             node->funcname = trim(tok->str, tok->len);
-            expect_reserved(")");
+            while (!consume_reserved(")"))
+            {
+                cur = cur->next = expr();
+                consume_reserved(",");
+            }
+            node->args = head.next;
         }
         else
         {

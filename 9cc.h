@@ -1,3 +1,5 @@
+#include <stdbool.h>
+
 extern char *user_input;
 
 typedef enum
@@ -81,6 +83,9 @@ extern LVar *locals;
 extern int Lend;
 extern int Lelse;
 extern int Lbegin;
+
+// 引数のレジスタ名
+extern char *argreg[];
 
 // generate
 void gen(Node *node);
