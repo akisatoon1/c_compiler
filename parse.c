@@ -23,6 +23,7 @@ Node *new_node_num(int val)
     return node;
 }
 
+// program = stmt*
 void program()
 {
     int i = 0;
@@ -33,6 +34,12 @@ void program()
     code[i] = NULL;
 }
 
+// stmt = expr ";"
+//      | "return" expr ";"
+//      | "if" "(" expr ")" stmt ("else" stmt)?
+//      | "while" "(" expr ")" stmt
+//      | "for" "(" expr? ";" expr? ";" expr? ")" stmt
+//      | "{" stmt* "}"
 Node *stmt()
 {
     Node *node;
@@ -126,11 +133,13 @@ Node *stmt()
     return node;
 }
 
+// expr = assign
 Node *expr()
 {
     return assign();
 }
 
+// assign = equality ("=" assign)?
 Node *assign()
 {
     Node *node = equality();
@@ -141,6 +150,7 @@ Node *assign()
     return node;
 }
 
+// equality = relational ("==" relational | "!=" relational)*
 Node *equality()
 {
     Node *node = relational();
@@ -161,6 +171,7 @@ Node *equality()
     }
 }
 
+// relational = add ("<" add | "<=" add | ">" add | ">=" add)*
 Node *relational()
 {
     Node *node = add();
@@ -189,6 +200,7 @@ Node *relational()
     }
 }
 
+// add = mul ("+" mul | "-" mul)*
 Node *add()
 {
     Node *node = mul();
@@ -209,6 +221,7 @@ Node *add()
     }
 }
 
+// mul = unary ("*" unary | "/" unary)*
 Node *mul()
 {
     Node *node = unary();
@@ -229,6 +242,7 @@ Node *mul()
     }
 }
 
+// unary = ("+" | "-")? primary
 Node *unary()
 {
     if (consume_reserved("+"))
@@ -242,6 +256,9 @@ Node *unary()
     return primary();
 }
 
+// primary = num
+//         | ident ("(" ")")?
+//         | "(" expr ")"
 Node *primary()
 {
     if (consume_reserved("("))
