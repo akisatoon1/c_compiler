@@ -5,7 +5,7 @@
 #include <ctype.h>
 #include <string.h>
 #include "9cc.h"
-
+// branch test
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs)
 {
     Node *node = calloc(1, sizeof(Node));
