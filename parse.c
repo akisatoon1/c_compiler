@@ -23,15 +23,32 @@ Node *new_node_num(int val)
     return node;
 }
 
-// program = stmt*
+// program = function*
 void program()
 {
     int i = 0;
     while (!at_eof())
     {
-        code[i++] = stmt();
+        code[i++] = function();
     }
     code[i] = NULL;
+}
+
+// function = ident "(" ")" "{" stmt* "}"
+Node *function()
+{
+    Node *node = calloc(1, sizeof(Node));
+    Token *tok = consume_ident();
+    if (!tok)
+    {
+        error("関数が読み込めません。");
+    }
+    expect_reserved("(");
+    expect_reserved(")");
+    node->kind = ND_FUNC;
+    node->funcname = trim(tok->str, tok->len);
+    node->body = stmt();
+    return node;
 }
 
 // stmt = expr ";"

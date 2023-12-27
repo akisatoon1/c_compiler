@@ -26,13 +26,6 @@ int main(int argc, char **argv)
     program();
 
     printf(".intel_syntax noprefix\n");
-    printf(".globl main\n");
-    printf("main:\n");
-
-    printf("    push rbp\n");
-    printf("    mov rbp, rsp\n");
-    // rspを16byte整列にalignしてない
-    printf("    sub rsp, 208\n");
 
     for (int i = 0; code[i]; i++)
     {
@@ -49,6 +42,7 @@ void error(char *fmt, ...)
     va_start(ap, fmt);
     vfprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");
+    fprintf(stderr, "token->str: %s\n", token->str);
     exit(1);
 }
 

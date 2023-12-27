@@ -43,6 +43,7 @@ typedef enum
     ND_FOR,      // for
     ND_BLOCK,    //{}
     ND_FUNCCALL, // call function
+    ND_FUNC,     // function definition
     ND_NUM,      // Integer
 } NodeKind;
 
@@ -93,6 +94,7 @@ void gen_lval(Node *node);
 
 // ENBF
 void program();
+Node *function();
 Node *stmt();
 Node *expr();
 Node *assign();

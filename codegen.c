@@ -141,6 +141,14 @@ void gen(Node *node)
         // rspを16byte整列にalignしてない
         printf("    call %s\n", node->funcname);
         return;
+    case ND_FUNC:
+        printf(".globl %s\n", node->funcname);
+        printf("%s:\n", node->funcname);
+        printf("    push rbp\n");
+        printf("    mov rbp, rsp\n");
+        printf("    sub rsp, 208\n");
+        gen(node->body);
+        return;
     default:
         break;
     }
