@@ -140,6 +140,7 @@ void gen(Node *node)
         // mov rax, 0
         // rspを16byte整列にalignしてない
         printf("    call %s\n", node->funcname);
+        printf("    push rax\n");
         return;
     case ND_FUNC:
         printf(".globl %s\n", node->funcname);
