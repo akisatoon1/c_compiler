@@ -91,11 +91,15 @@ extern char *argreg[];
 // generate
 void gen(Node *node);
 void gen_lval(Node *node);
+void gen_function(Node *node);
+void gen_stmt(Node *node);
+void gen_expr(Node *node);
 
 // ENBF
 void program();
 Node *function();
 Node *stmt();
+// Node *compound_stmt();
 Node *expr();
 Node *assign();
 Node *equality();
