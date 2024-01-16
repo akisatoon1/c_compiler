@@ -33,6 +33,19 @@ void gen_function(Node *node)
         printf("    push rbp\n");
         printf("    mov rbp, rsp\n");
         printf("    sub rsp, 208\n");
+        int nargs = 0;
+        for (Node *arg = node->args; arg; arg = arg->next)
+        {
+            printf("    mov rax, rbp\n");
+            printf("    sub rax, %d\n", arg->offset);
+            printf("    push rax\n");
+            nargs++;
+        }
+        for (int i = nargs - 1; i >= 0; i--)
+        {
+            printf("    pop rax\n");
+            printf("    mov [rax], %s\n", argreg[i]);
+        }
         gen_stmt(node->body);
     }
     return;

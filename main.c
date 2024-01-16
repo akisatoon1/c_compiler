@@ -22,7 +22,7 @@ int main(int argc, char **argv)
 
     user_input = argv[1];
     token = tokenize(user_input);
-    locals = calloc(1, sizeof(LVar));
+    // locals = calloc(1, sizeof(LVar));
     program();
 
     printf(".intel_syntax noprefix\n");

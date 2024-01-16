@@ -29,12 +29,15 @@ void program()
     int i = 0;
     while (!at_eof())
     {
+        locals = calloc(1, sizeof(LVar));
+        // printf("ini locals.\n");
         code[i++] = function();
     }
     code[i] = NULL;
 }
 
 // function = ident "(" ")" "{" stmt* "}"
+//          | ident "(" ident ("," ident)* ")" "{" stmt* "}"
 Node *function()
 {
     Node *node = calloc(1, sizeof(Node));
@@ -44,10 +47,40 @@ Node *function()
         error("関数が読み込めません。");
     }
     expect_reserved("(");
-    expect_reserved(")");
+    Node head = {};
+    Node *cur = &head;
     node->kind = ND_FUNC;
     node->funcname = trim(tok->str, tok->len);
+    while (!consume_reserved(")"))
+    {
+        Node *node_var = calloc(1, sizeof(Node));
+        node_var->kind = ND_LVAR;
+        Token *tok_var = consume_ident();
+        if (!tok_var)
+        {
+            error("引数には変数を指定してください。（関数定義時）");
+        }
+        LVar *lvar = find_lvar(tok_var);
+        if (lvar)
+        {
+            error("既に使われているローカル変数です。");
+        }
+        else
+        {
+            lvar = calloc(1, sizeof(LVar));
+            lvar->next = locals;
+            lvar->name = tok_var->str;
+            lvar->len = tok_var->len;
+            lvar->offset = locals->offset + 8;
+            node_var->offset = lvar->offset;
+            locals = lvar;
+        }
+        cur = cur->next = node_var;
+        consume_reserved(",");
+    }
+    node->args = head.next;
     node->body = stmt();
+
     return node;
 }
 
