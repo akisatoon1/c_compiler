@@ -6,10 +6,12 @@
 #include <string.h>
 #include "9cc.h"
 
+// 符号なし整数のみ実装中
+
 char *user_input;
 Token *token;
 Node *code[100];
-// 変数のリスト
+// 変数のvector
 LVar *locals;
 
 int main(int argc, char **argv)

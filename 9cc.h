@@ -45,6 +45,8 @@ typedef enum
     ND_FUNCCALL, // call function
     ND_FUNC,     // function definition
     ND_NUM,      // Integer
+    ND_DEREF,    // *
+    ND_ADDR,     // &
 } NodeKind;
 
 typedef struct Node Node;

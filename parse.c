@@ -30,7 +30,6 @@ void program()
     while (!at_eof())
     {
         locals = calloc(1, sizeof(LVar));
-        // printf("ini locals.\n");
         code[i++] = function();
     }
     code[i] = NULL;
@@ -293,6 +292,7 @@ Node *mul()
 }
 
 // unary = ("+" | "-")? primary
+//       | ("*" | "&") unary
 Node *unary()
 {
     if (consume_reserved("+"))
@@ -302,6 +302,20 @@ Node *unary()
     if (consume_reserved("-"))
     {
         return new_node(ND_SUB, new_node_num(0), primary());
+    }
+    if (consume_reserved("*"))
+    {
+        Node *node = calloc(1, sizeof(Node));
+        node->kind = ND_DEREF;
+        node->lhs = unary();
+        return node;
+    }
+    if (consume_reserved("&"))
+    {
+        Node *node = calloc(1, sizeof(Node));
+        node->kind = ND_ADDR;
+        node->lhs = unary();
+        return node;
     }
     return primary();
 }

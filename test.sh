@@ -16,6 +16,11 @@ assert() {
   fi
 }
 
+assert 5 'main(){ x=3; y=5; return *(&x-8); }'
+assert 3 'main(){ x=3; return *&x; }'
+assert 3 'main(){ x=3; y=&x; z=&y; return **z; }'
+assert 3 'main(){ x=3; y=5; return *(&y+8); }'
+
 assert 34 'fib(a,b){ c=a+b; if(c>21){ return c;} return fib(b,c);} main(){ return fib(1,1);}'
 assert 5 'add(a,b){return a+b;} main(){return add(2,3);}'
 assert 5 'foo(){ return 5;} main(){return foo();}'
