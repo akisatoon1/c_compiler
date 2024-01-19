@@ -129,6 +129,10 @@ void gen_stmt(Node *node)
         Lbegin++;
         Lend++;
         return;
+    case ND_TYPE:
+        // stmtは最後に'pop rax'されるため、てきとうな数字をpushしている。
+        printf("    push 0\n");
+        return;
     case ND_BLOCK:
         for (Node *n = node->body; n; n = n->next)
         {

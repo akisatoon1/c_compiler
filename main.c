@@ -6,8 +6,10 @@
 #include <string.h>
 #include "9cc.h"
 
-// 符号なし整数のみ実装中
+// 符号なし整数のみ実装中。
+// 関数の識別子を保存していない。
 
+// コンパイルする文字列
 char *user_input;
 Token *token;
 Node *code[100];
@@ -44,7 +46,7 @@ void error(char *fmt, ...)
     va_start(ap, fmt);
     vfprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");
-    fprintf(stderr, "token->str: %s\n", token->str);
+    fprintf(stderr, "token->str: %s\n\n", token->str);
     exit(1);
 }
 
@@ -55,10 +57,14 @@ void error_at(char *loc, char *fmt, ...)
 
     int pos = loc - user_input;
     fprintf(stderr, "%s\n", user_input);
-    fprintf(stderr, "%*s\n", pos, " ");
-    fprintf(stderr, "^");
+    for (int i = 0; i < pos; i++)
+    {
+        fprintf(stderr, "%s", " ");
+    }
+    // fprintf(stderr, "%*s", pos, " ");
+    fprintf(stderr, "^\n");
     vfprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");
-    fprintf(stderr, "tok->str: '%s'\n", token->str);
+    fprintf(stderr, "token->str: '%s'\n\n", token->str);
     exit(1);
 }

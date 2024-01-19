@@ -35,11 +35,15 @@ void program()
     code[i] = NULL;
 }
 
-// function = ident "(" ")" "{" stmt* "}"
-//          | ident "(" ident ("," ident)* ")" "{" stmt* "}"
+// function = "int" ident "(" ")" "{" stmt* "}"
+//          | "int" ident "(" ident ("," ident)* ")" "{" stmt* "}"
 Node *function()
 {
     Node *node = calloc(1, sizeof(Node));
+    if (!consume_type("int"))
+    {
+        error_at(token->str, "型宣言をしてください。");
+    }
     Token *tok = consume_ident();
     if (!tok)
     {
@@ -54,6 +58,10 @@ Node *function()
     {
         Node *node_var = calloc(1, sizeof(Node));
         node_var->kind = ND_LVAR;
+        if (!consume_type("int"))
+        {
+            error_at(token->str, "型宣言をしてください。");
+        }
         Token *tok_var = consume_ident();
         if (!tok_var)
         {
@@ -88,6 +96,7 @@ Node *function()
 //      | "if" "(" expr ")" stmt ("else" stmt)?
 //      | "while" "(" expr ")" stmt
 //      | "for" "(" expr? ";" expr? ";" expr? ")" stmt
+//      | "int" ident ";"
 //      | "{" stmt* "}"
 Node *stmt()
 {
@@ -173,6 +182,35 @@ Node *stmt()
             expect_reserved(")");
         }
         node->then = stmt();
+    }
+    else if (consume_type("int"))
+    {
+        node = calloc(1, sizeof(Node));
+        node->kind = ND_TYPE;
+        Token *tok = consume_ident();
+        if (tok)
+        {
+            LVar *lvar = find_lvar(tok);
+            if (lvar)
+            {
+                error_at(tok->str, "'%s'は既に使われている変数名です。", trim(tok->str, tok->len));
+            }
+            else
+            {
+                lvar = calloc(1, sizeof(LVar));
+                lvar->next = locals;
+                lvar->name = tok->str;
+                lvar->len = tok->len;
+                lvar->offset = locals->offset + 8;
+                node->offset = lvar->offset;
+                locals = lvar;
+            }
+        }
+        else
+        {
+            error_at(token->str, "変数名ではありません。");
+        }
+        expect_reserved(";");
     }
     else
     {
@@ -320,10 +358,10 @@ Node *unary()
     return primary();
 }
 
-// primary = num
+// primary = "(" expr ")"
 //         | ident ("(" ")")?
 //         | ident "(" expr ("," expr)* ")"
-//         | "(" expr ")"
+//         | num
 Node *primary()
 {
     if (consume_reserved("("))
@@ -359,6 +397,8 @@ Node *primary()
             }
             else
             {
+                error_at(tok->str, "'%s'は宣言されていない変数名です。", trim(tok->str, tok->len));
+                /*
                 lvar = calloc(1, sizeof(LVar));
                 lvar->next = locals;
                 lvar->name = tok->str;
@@ -366,6 +406,7 @@ Node *primary()
                 lvar->offset = locals->offset + 8;
                 node->offset = lvar->offset;
                 locals = lvar;
+                */
             }
         }
         return node;

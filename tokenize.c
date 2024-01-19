@@ -44,7 +44,6 @@ Token *tokenize(char *p)
             cur = new_token(TK_RESERVED, cur, p++, 1);
             continue;
         }
-
         if (is_keyword(p, "return"))
         {
             cur = new_token(TK_RETURN, cur, p, 6);
@@ -72,6 +71,12 @@ Token *tokenize(char *p)
         if (is_keyword(p, "for"))
         {
             cur = new_token(TK_CONTROLS, cur, p, 3);
+            p += 3;
+            continue;
+        }
+        if (is_keyword(p, "int"))
+        {
+            cur = new_token(TK_TYPE, cur, p, 3);
             p += 3;
             continue;
         }

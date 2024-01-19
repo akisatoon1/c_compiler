@@ -8,6 +8,7 @@ typedef enum
     TK_IDENT,    // 識別子
     TK_NUM,      // 整数トークン
     TK_CONTROLS, // 制御文字列
+    TK_TYPE,     // 型
     TK_RETURN,   // return
     TK_EOF       // 入力の終わりを示すトークン
 } TokenKind;
@@ -47,6 +48,7 @@ typedef enum
     ND_NUM,      // Integer
     ND_DEREF,    // *
     ND_ADDR,     // &
+    ND_TYPE,     // int
 } NodeKind;
 
 typedef struct Node Node;
@@ -132,10 +134,11 @@ void expect_reserved(char *op);
 bool consume_reserved(char *op);
 Token *consume_ident();
 bool consume_controls(char *s);
+bool consume_type(char *s);
 bool consume_return();
 
 // error
-void error_at(char *, char *, ...);
+void error_at(char *loc, char *fmt, ...);
 void error(char *, ...);
 
 // var
