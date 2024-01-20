@@ -160,7 +160,18 @@ void gen_expr(Node *node)
         printf("    push rax\n");
         return;
     case ND_ASSIGN:
-        gen_lval(node->lhs);
+        if (node->lhs->kind == ND_LVAR)
+        {
+            gen_lval(node->lhs);
+        }
+        else if (node->lhs->kind == ND_DEREF)
+        {
+            gen_expr(node->lhs->lhs);
+        }
+        else
+        {
+            error("代入可能な左辺値ではありません。");
+        }
         gen_expr(node->rhs);
         printf("    pop rdi\n");
         printf("    pop rax\n");

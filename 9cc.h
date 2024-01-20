@@ -73,12 +73,25 @@ struct Node
 
 extern Node *code[100];
 
+// 型
+typedef struct Type Type;
+struct Type
+{
+    enum
+    {
+        TY_INT,
+        TY_PTR
+    } ty;
+    Type *ptr_to;
+};
+
 typedef struct LVar LVar;
 
 struct LVar
 {
     LVar *next;
     char *name;
+    Type *type;
     int len;
     int offset;
 };
@@ -135,6 +148,7 @@ bool consume_reserved(char *op);
 Token *consume_ident();
 bool consume_controls(char *s);
 bool consume_type(char *s);
+void expect_type(char *s);
 bool consume_return();
 
 // error

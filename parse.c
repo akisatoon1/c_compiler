@@ -40,14 +40,11 @@ void program()
 Node *function()
 {
     Node *node = calloc(1, sizeof(Node));
-    if (!consume_type("int"))
-    {
-        error_at(token->str, "型宣言をしてください。");
-    }
+    expect_type("int");
     Token *tok = consume_ident();
     if (!tok)
     {
-        error("関数が読み込めません。");
+        error("関数名がありません。");
     }
     expect_reserved("(");
     Node head = {};
@@ -58,10 +55,7 @@ Node *function()
     {
         Node *node_var = calloc(1, sizeof(Node));
         node_var->kind = ND_LVAR;
-        if (!consume_type("int"))
-        {
-            error_at(token->str, "型宣言をしてください。");
-        }
+        expect_type("int");
         Token *tok_var = consume_ident();
         if (!tok_var)
         {
@@ -96,7 +90,7 @@ Node *function()
 //      | "if" "(" expr ")" stmt ("else" stmt)?
 //      | "while" "(" expr ")" stmt
 //      | "for" "(" expr? ";" expr? ";" expr? ")" stmt
-//      | "int" ident ";"
+//      | "int" "*"* ident ";"
 //      | "{" stmt* "}"
 Node *stmt()
 {
@@ -187,6 +181,15 @@ Node *stmt()
     {
         node = calloc(1, sizeof(Node));
         node->kind = ND_TYPE;
+        Type *type = calloc(1, sizeof(Type));
+        type->ty = TY_INT;
+        while (consume_reserved("*"))
+        {
+            Type *type_ptr = calloc(1, sizeof(Type));
+            type_ptr->ty = TY_PTR;
+            type_ptr->ptr_to = type;
+            type = type_ptr;
+        }
         Token *tok = consume_ident();
         if (tok)
         {
@@ -200,6 +203,7 @@ Node *stmt()
                 lvar = calloc(1, sizeof(LVar));
                 lvar->next = locals;
                 lvar->name = tok->str;
+                lvar->type = type;
                 lvar->len = tok->len;
                 lvar->offset = locals->offset + 8;
                 node->offset = lvar->offset;
@@ -398,15 +402,6 @@ Node *primary()
             else
             {
                 error_at(tok->str, "'%s'は宣言されていない変数名です。", trim(tok->str, tok->len));
-                /*
-                lvar = calloc(1, sizeof(LVar));
-                lvar->next = locals;
-                lvar->name = tok->str;
-                lvar->len = tok->len;
-                lvar->offset = locals->offset + 8;
-                node->offset = lvar->offset;
-                locals = lvar;
-                */
             }
         }
         return node;

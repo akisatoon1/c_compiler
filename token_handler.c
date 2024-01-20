@@ -64,6 +64,16 @@ bool consume_type(char *s)
     return true;
 }
 
+void expect_type(char *s)
+{
+    if (token->kind != TK_TYPE || strlen(s) != token->len || memcmp(s, token->str, token->len))
+    {
+        error_at(token->str, "型宣言をしてください。");
+    }
+    token = token->next;
+    return;
+}
+
 bool consume_return()
 {
     if (token->kind != TK_RETURN || strncmp(token->str, "return", 6))
@@ -81,6 +91,7 @@ void expect_reserved(char *op)
         error("'%s'ではありません", op);
     }
     token = token->next;
+    return;
 }
 
 int expect_number()
