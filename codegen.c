@@ -24,30 +24,28 @@ void gen_lval(Node *node)
     printf("    push rax\n");
 }
 
-void gen_function(Node *node)
+void gen_function(Function *func)
 {
-    if (node->kind == ND_FUNC_DEF)
+    printf(".globl %s\n", func->name);
+    printf("%s:\n", func->name);
+    printf("    push rbp\n");
+    printf("    mov rbp, rsp\n");
+    printf("    sub rsp, %d\n", func->stack_size);
+    int nargs = 0;
+    for (LVar *param = func->params; param; param = param->next)
     {
-        printf(".globl %s\n", node->funcname);
-        printf("%s:\n", node->funcname);
-        printf("    push rbp\n");
-        printf("    mov rbp, rsp\n");
-        printf("    sub rsp, %d\n", node->stack_size);
-        int nargs = 0;
-        for (Node *arg = node->args; arg; arg = arg->next)
-        {
-            printf("    mov rax, rbp\n");
-            printf("    sub rax, %d\n", arg->var->offset);
-            printf("    push rax\n");
-            nargs++;
-        }
-        for (int i = nargs - 1; i >= 0; i--)
-        {
-            printf("    pop rax\n");
-            printf("    mov [rax], %s\n", argreg[i]);
-        }
-        gen_stmt(node->body);
+        printf("    mov rax, rbp\n");
+        printf("    sub rax, %d\n", param->offset);
+        printf("    push rax\n");
+        nargs++;
     }
+    for (int i = nargs - 1; i >= 0; i--)
+    {
+        printf("    pop rax\n");
+        printf("    mov [rax], %s\n", argreg[i]);
+    }
+    gen_stmt(func->body);
+
     return;
 }
 

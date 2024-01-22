@@ -2,6 +2,13 @@
 
 extern char *user_input;
 
+typedef struct Node Node;
+typedef struct Token Token;
+typedef struct LVar LVar;
+typedef struct Type Type;
+typedef struct Function Function;
+
+// TokenKind
 typedef enum
 {
     TK_RESERVED, // 記号
@@ -12,8 +19,6 @@ typedef enum
     TK_RETURN,   // return
     TK_EOF       // 入力の終わりを示すトークン
 } TokenKind;
-
-typedef struct Token Token;
 
 struct Token
 {
@@ -27,7 +32,6 @@ struct Token
 extern Token *token;
 
 // 型
-typedef struct Type Type;
 struct Type
 {
     enum
@@ -38,8 +42,7 @@ struct Type
     Type *ptr_to;
 };
 
-typedef struct LVar LVar;
-
+// local variable
 struct LVar
 {
     LVar *next;
@@ -51,6 +54,18 @@ struct LVar
 
 extern LVar *locals;
 
+struct Function
+{
+    Function *next;
+    char *name;
+    LVar *params;
+
+    Node *body;
+    LVar *locals;
+    int stack_size;
+};
+
+// NodeKind
 typedef enum
 {
     ND_ADD,      // +
@@ -69,14 +84,11 @@ typedef enum
     ND_FOR,      // for
     ND_BLOCK,    //{}
     ND_FUNCCALL, // call function
-    ND_FUNC_DEF, // function definition
     ND_NUM,      // Integer
     ND_DEREF,    // *
     ND_ADDR,     // &
     ND_TYPE_DEF, // int
 } NodeKind;
-
-typedef struct Node Node;
 
 struct Node
 {
@@ -98,17 +110,16 @@ struct Node
     Node *body; //{...}
 
     // Function call
-    char *funcname;
-    Node *args; // arguments
+    char *funcname; // function name
+    Node *args;     // arguments
 
     int val;   // Used if kind == ND_NUM
     LVar *var; // Used if kind == ND_VAR
-
-    int stack_size;
 };
 
 extern Node *code[100];
 
+// label id
 extern int Lend;
 extern int Lelse;
 extern int Lbegin;
@@ -119,13 +130,13 @@ extern char *argreg[];
 // generate
 void gen(Node *node);
 void gen_lval(Node *node);
-void gen_function(Node *node);
+void gen_function(Function *func);
 void gen_stmt(Node *node);
 void gen_expr(Node *node);
 
 // ENBF
-void program();
-Node *function();
+Function *program();
+Function *function();
 Node *stmt();
 // Node *compound_stmt();
 Node *expr();

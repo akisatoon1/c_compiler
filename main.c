@@ -9,12 +9,14 @@
 // call時に16倍数へのalignmentせず
 // 符号なし整数のみ実装中。
 // 関数の識別子を保存していない。
+// 関数の型がintのみ
 // 全ての型のサイズが8byte
 
 // コンパイルする文字列
 char *user_input;
 Token *token;
 Node *code[100];
+
 // 変数のvector
 LVar *locals;
 
@@ -28,14 +30,16 @@ int main(int argc, char **argv)
 
     user_input = argv[1];
     token = tokenize(user_input);
-    // locals = calloc(1, sizeof(LVar));
-    program();
+
+    // function vector
+    Function *funcs = program();
 
     printf(".intel_syntax noprefix\n");
 
-    for (int i = 0; code[i]; i++)
+    while (funcs)
     {
-        gen_function(code[i]);
+        gen_function(funcs);
+        funcs = funcs->next;
     }
 
     return 0;

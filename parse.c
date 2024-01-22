@@ -24,44 +24,48 @@ Node *new_node_num(int val)
 }
 
 // program = function*
-void program()
+Function *program()
 {
-    int i = 0;
+    Function head = {};
+    Function *cur = &head;
     while (!at_eof())
     {
+        Function *func = calloc(1, sizeof(Function));
         locals = calloc(1, sizeof(LVar));
-        code[i++] = function();
+        func = function(func);
+        func->locals = locals;
+        cur = cur->next = func;
     }
-    code[i] = NULL;
+    cur->next = NULL;
+
+    // function vector
+    return head.next;
 }
 
 // function = "int" ident "(" ")" "{" stmt* "}"
 //          | "int" ident "(" ident ("," ident)* ")" "{" stmt* "}"
-Node *function()
+Function *function(Function *func)
 {
-    Node *node = calloc(1, sizeof(Node));
     expect_type("int");
     Token *tok = consume_ident();
     if (!tok)
     {
         error("関数名がありません。");
     }
+    func->name = trim(tok->str, tok->len);
     expect_reserved("(");
-    Node head = {};
-    Node *cur = &head;
-    node->kind = ND_FUNC_DEF;
-    node->funcname = trim(tok->str, tok->len);
+    LVar head = {};
+    LVar *cur = &head;
     while (!consume_reserved(")"))
     {
-        Node *node_var = calloc(1, sizeof(Node));
-        node_var->kind = ND_LVAR;
+        LVar *param = calloc(1, sizeof(LVar));
         expect_type("int");
-        Token *tok_var = consume_ident();
-        if (!tok_var)
+        Token *tok_param = consume_ident();
+        if (!tok_param)
         {
             error("引数には変数を指定してください。（関数定義時）");
         }
-        LVar *lvar = find_lvar(tok_var);
+        LVar *lvar = find_lvar(tok_param);
         if (lvar)
         {
             error("既に使われているローカル変数です。");
@@ -70,21 +74,26 @@ Node *function()
         {
             lvar = calloc(1, sizeof(LVar));
             lvar->next = locals;
-            lvar->name = tok_var->str;
-            lvar->len = tok_var->len;
+            lvar->name = tok_param->str;
+            lvar->len = tok_param->len;
             lvar->offset = locals->offset + 8;
-            node_var->var = lvar;
-            node_var->ty = lvar->ty;
+
+            param->name = lvar->name;
+            param->len = lvar->len;
+            param->offset = lvar->offset;
+
             locals = lvar;
         }
-        cur = cur->next = node_var;
+        cur = cur->next = param;
         consume_reserved(",");
     }
-    node->args = head.next;
-    node->body = stmt();
-    node->stack_size = align_to(locals->offset, 16);
 
-    return node;
+    // params vector
+    func->params = head.next;
+    func->body = stmt();
+    func->stack_size = align_to(locals->offset, 16);
+
+    return func;
 }
 
 // stmt = expr ";"
