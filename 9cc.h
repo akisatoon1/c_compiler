@@ -69,6 +69,7 @@ struct Node
     Node *args; // arguments
     int val;
     int offset;
+    int stack_size;
 };
 
 extern Node *code[100];
@@ -160,3 +161,6 @@ LVar *find_lvar(Token *tok);
 
 // trim
 char *trim(char *s, int size_t);
+
+// align
+int align_to(int n, int align);

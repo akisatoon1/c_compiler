@@ -32,7 +32,7 @@ void gen_function(Node *node)
         printf("%s:\n", node->funcname);
         printf("    push rbp\n");
         printf("    mov rbp, rsp\n");
-        printf("    sub rsp, 208\n");
+        printf("    sub rsp, %d\n", node->stack_size);
         int nargs = 0;
         for (Node *arg = node->args; arg; arg = arg->next)
         {
@@ -137,7 +137,7 @@ void gen_stmt(Node *node)
         for (Node *n = node->body; n; n = n->next)
         {
             gen_stmt(n);
-            printf("    pop rax\n");
+            // printf("    pop rax\n");
         }
         return;
     default:

@@ -81,6 +81,7 @@ Node *function()
     }
     node->args = head.next;
     node->body = stmt();
+    node->stack_size = align_to(locals->offset, 16);
 
     return node;
 }

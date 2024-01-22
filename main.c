@@ -6,8 +6,10 @@
 #include <string.h>
 #include "9cc.h"
 
+// call時に16倍数へのalignmentせず
 // 符号なし整数のみ実装中。
 // 関数の識別子を保存していない。
+// 全ての型のサイズが8byte
 
 // コンパイルする文字列
 char *user_input;
@@ -34,7 +36,6 @@ int main(int argc, char **argv)
     for (int i = 0; code[i]; i++)
     {
         gen_function(code[i]);
-        // printf("    pop rax\n");
     }
 
     return 0;
@@ -67,4 +68,10 @@ void error_at(char *loc, char *fmt, ...)
     fprintf(stderr, "\n");
     fprintf(stderr, "token->str: '%s'\n\n", token->str);
     exit(1);
+}
+
+int align_to(int n, int align)
+{
+    // printf("n: %d\n", n);
+    return (n - 1 + align) / align * align;
 }
