@@ -49,7 +49,7 @@ Node *function()
     expect_reserved("(");
     Node head = {};
     Node *cur = &head;
-    node->kind = ND_FUNC;
+    node->kind = ND_FUNC_DEF;
     node->funcname = trim(tok->str, tok->len);
     while (!consume_reserved(")"))
     {
@@ -73,7 +73,8 @@ Node *function()
             lvar->name = tok_var->str;
             lvar->len = tok_var->len;
             lvar->offset = locals->offset + 8;
-            node_var->offset = lvar->offset;
+            node_var->var = lvar;
+            node_var->ty = lvar->ty;
             locals = lvar;
         }
         cur = cur->next = node_var;
@@ -181,7 +182,7 @@ Node *stmt()
     else if (consume_type("int"))
     {
         node = calloc(1, sizeof(Node));
-        node->kind = ND_TYPE;
+        node->kind = ND_TYPE_DEF;
         Type *type = calloc(1, sizeof(Type));
         type->ty = TY_INT;
         while (consume_reserved("*"))
@@ -204,10 +205,11 @@ Node *stmt()
                 lvar = calloc(1, sizeof(LVar));
                 lvar->next = locals;
                 lvar->name = tok->str;
-                lvar->type = type;
+                lvar->ty = type;
                 lvar->len = tok->len;
                 lvar->offset = locals->offset + 8;
-                node->offset = lvar->offset;
+                node->var = lvar;
+                node->ty = lvar->ty;
                 locals = lvar;
             }
         }
@@ -398,7 +400,8 @@ Node *primary()
             LVar *lvar = find_lvar(tok);
             if (lvar)
             {
-                node->offset = lvar->offset;
+                node->var = lvar;
+                node->ty = lvar->ty;
             }
             else
             {

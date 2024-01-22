@@ -26,54 +26,6 @@ struct Token
 
 extern Token *token;
 
-typedef enum
-{
-    ND_ADD,      // +
-    ND_SUB,      // -
-    ND_MUL,      // *
-    ND_DIV,      // /
-    ND_EQ,       // ==
-    ND_NE,       // !=
-    ND_LT,       // <
-    ND_LE,       // <=
-    ND_ASSIGN,   // =
-    ND_LVAR,     // ローカル変数
-    ND_RETURN,   // return
-    ND_IF,       // if
-    ND_WHILE,    // while
-    ND_FOR,      // for
-    ND_BLOCK,    //{}
-    ND_FUNCCALL, // call function
-    ND_FUNC,     // function definition
-    ND_NUM,      // Integer
-    ND_DEREF,    // *
-    ND_ADDR,     // &
-    ND_TYPE,     // int
-} NodeKind;
-
-typedef struct Node Node;
-
-struct Node
-{
-    NodeKind kind;
-    Node *lhs;
-    Node *rhs;
-    Node *cond; // condition
-    Node *then;
-    Node *_else;
-    Node *init;
-    Node *inc;  // increment
-    Node *body; //{...}
-    Node *next;
-    char *funcname;
-    Node *args; // arguments
-    int val;
-    int offset;
-    int stack_size;
-};
-
-extern Node *code[100];
-
 // 型
 typedef struct Type Type;
 struct Type
@@ -92,12 +44,70 @@ struct LVar
 {
     LVar *next;
     char *name;
-    Type *type;
+    Type *ty;
     int len;
     int offset;
 };
 
 extern LVar *locals;
+
+typedef enum
+{
+    ND_ADD,      // +
+    ND_SUB,      // -
+    ND_MUL,      // *
+    ND_DIV,      // /
+    ND_EQ,       // ==
+    ND_NE,       // !=
+    ND_LT,       // <
+    ND_LE,       // <=
+    ND_ASSIGN,   // =
+    ND_LVAR,     // ローカル変数
+    ND_RETURN,   // return
+    ND_IF,       // if
+    ND_WHILE,    // while
+    ND_FOR,      // for
+    ND_BLOCK,    //{}
+    ND_FUNCCALL, // call function
+    ND_FUNC_DEF, // function definition
+    ND_NUM,      // Integer
+    ND_DEREF,    // *
+    ND_ADDR,     // &
+    ND_TYPE_DEF, // int
+} NodeKind;
+
+typedef struct Node Node;
+
+struct Node
+{
+    NodeKind kind;
+    Node *next;
+    Type *ty; // Type, e.g. int or pointer to int
+
+    Node *lhs;
+    Node *rhs;
+
+    // "if" or "for" statement
+    Node *cond; // condition
+    Node *then;
+    Node *_else;
+    Node *init;
+    Node *inc; // increment
+
+    // Block
+    Node *body; //{...}
+
+    // Function call
+    char *funcname;
+    Node *args; // arguments
+
+    int val;   // Used if kind == ND_NUM
+    LVar *var; // Used if kind == ND_VAR
+
+    int stack_size;
+};
+
+extern Node *code[100];
 
 extern int Lend;
 extern int Lelse;

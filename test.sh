@@ -22,7 +22,7 @@ assert 3 'int main(){ int x; int *y; y = &x; *y = 3; return x; }'
 assert 3 'int main(){ int x; x=3; return *&x; }'
 assert 5 'int main(){ int x; int y; x=3; y=5; return *(&x-8); }'
 assert 3 'int main(){ int x; x=3; return *&x; }'
-assert 3 'int main(){ int x; int y; int z; x=3; y=&x; z=&y; return **z; }'
+assert 3 'int main(){ int x; int *y; int **z; x=3; y=&x; z=&y; return **z; }'
 assert 3 'int main(){ int x; int y; x=3; y=5; return *(&y+8); }'
 
 assert 34 'int fib(int a,int b){int c; c=a+b; if(c>21){ return c;} return fib(b,c);} int main(){ return fib(1,1);}'

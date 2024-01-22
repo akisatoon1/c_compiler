@@ -20,13 +20,13 @@ void gen_lval(Node *node)
         error("代入の左辺値が変数ではありません。");
     }
     printf("    mov rax, rbp\n");
-    printf("    sub rax, %d\n", node->offset);
+    printf("    sub rax, %d\n", node->var->offset);
     printf("    push rax\n");
 }
 
 void gen_function(Node *node)
 {
-    if (node->kind == ND_FUNC)
+    if (node->kind == ND_FUNC_DEF)
     {
         printf(".globl %s\n", node->funcname);
         printf("%s:\n", node->funcname);
@@ -37,7 +37,7 @@ void gen_function(Node *node)
         for (Node *arg = node->args; arg; arg = arg->next)
         {
             printf("    mov rax, rbp\n");
-            printf("    sub rax, %d\n", arg->offset);
+            printf("    sub rax, %d\n", arg->var->offset);
             printf("    push rax\n");
             nargs++;
         }
@@ -129,7 +129,7 @@ void gen_stmt(Node *node)
         Lbegin++;
         Lend++;
         return;
-    case ND_TYPE:
+    case ND_TYPE_DEF:
         // stmtは最後に'pop rax'されるため、てきとうな数字をpushしている。
         printf("    push 0\n");
         return;
