@@ -62,7 +62,7 @@ void gen_stmt(Node *node)
         return;
     case ND_IF:
         gen_expr(node->cond);
-        printf("    pop rax\n");
+        printf("    pop rax #if condition\n");
         printf("    cmp rax, 0\n");
         if (node->_else)
         {
@@ -84,7 +84,7 @@ void gen_stmt(Node *node)
     case ND_WHILE:
         printf(".Lbegin%d:\n", Lbegin);
         gen_expr(node->cond);
-        printf("    pop rax\n");
+        printf("    pop rax #while condition\n");
         printf("    cmp rax, 0\n");
         printf("    je .Lend%d\n", Lend);
         gen_stmt(node->then);
@@ -108,7 +108,7 @@ void gen_stmt(Node *node)
         {
             printf("    push 1\n");
         }
-        printf("    pop rax\n");
+        printf("    pop rax #for condition\n");
         printf("    cmp rax, 0\n");
         printf("    je .Lend%d\n", Lend);
         gen_stmt(node->then);
@@ -123,6 +123,7 @@ void gen_stmt(Node *node)
         Lend++;
         return;
     case ND_TYPE_DEF:
+        printf("    # type definition\n");
         return;
     case ND_BLOCK:
         for (Node *n = node->body; n; n = n->next)
@@ -132,7 +133,7 @@ void gen_stmt(Node *node)
         return;
     default:
         gen_expr(node);
-        printf("    pop rax\n");
+        printf("    pop rax #pop extra data from stack\n");
         return;
     }
 }
@@ -146,9 +147,9 @@ void gen_expr(Node *node)
         return;
     case ND_LVAR:
         gen_lval(node);
-        printf("    pop rax\n");
+        printf("    pop rax #address of variable\n");
         printf("    mov rax, [rax]\n");
-        printf("    push rax\n");
+        printf("    push rax #value of variable\n");
         return;
     case ND_ASSIGN:
         if (node->lhs->kind == ND_LVAR)
@@ -166,7 +167,7 @@ void gen_expr(Node *node)
         gen_expr(node->rhs);
         printf("    pop rdi\n");
         printf("    pop rax\n");
-        printf("    mov [rax], rdi\n");
+        printf("    mov [rax], rdi #assign\n");
         printf("    push rdi\n");
         return;
     case ND_FUNCCALL:
