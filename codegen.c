@@ -21,7 +21,7 @@ void gen_lval(Node *node)
     }
     printf("    mov rax, rbp\n");
     printf("    sub rax, %d\n", node->var->offset);
-    printf("    push rax #address of variable\n");
+    printf("    push rax # address of variable\n");
 }
 
 void gen_function(Function *func)
@@ -30,7 +30,7 @@ void gen_function(Function *func)
     printf("%s:\n", func->name);
     printf("    push rbp\n");
     printf("    mov rbp, rsp\n");
-    printf("    sub rsp, %d #allocate function stack for local variables\n", func->stack_size);
+    printf("    sub rsp, %d # allocate function stack for local variables\n", func->stack_size);
     int nargs = 0;
     for (LVar *param = func->params; param; param = param->next)
     {
@@ -55,14 +55,14 @@ void gen_stmt(Node *node)
     {
     case ND_RETURN:
         gen_expr(node->lhs);
-        printf("    pop rax #return value\n");
+        printf("    pop rax # return value\n");
         printf("    mov rsp, rbp\n");
         printf("    pop rbp\n");
         printf("    ret\n");
         return;
     case ND_IF:
         gen_expr(node->cond);
-        printf("    pop rax #if condition\n");
+        printf("    pop rax # if condition\n");
         printf("    cmp rax, 0\n");
         if (node->_else)
         {
@@ -84,7 +84,7 @@ void gen_stmt(Node *node)
     case ND_WHILE:
         printf(".Lbegin%d:\n", Lbegin);
         gen_expr(node->cond);
-        printf("    pop rax #while condition\n");
+        printf("    pop rax # while condition\n");
         printf("    cmp rax, 0\n");
         printf("    je .Lend%d\n", Lend);
         gen_stmt(node->then);
@@ -108,7 +108,7 @@ void gen_stmt(Node *node)
         {
             printf("    push 1\n");
         }
-        printf("    pop rax #for condition\n");
+        printf("    pop rax # for condition\n");
         printf("    cmp rax, 0\n");
         printf("    je .Lend%d\n", Lend);
         gen_stmt(node->then);
@@ -133,7 +133,7 @@ void gen_stmt(Node *node)
         return;
     default:
         gen_expr(node);
-        printf("    pop rax #pop extra data from stack\n");
+        printf("    pop rax # pop extra data from stack\n");
         return;
     }
 }
@@ -147,9 +147,9 @@ void gen_expr(Node *node)
         return;
     case ND_LVAR:
         gen_lval(node);
-        printf("    pop rax #address of variable\n");
+        printf("    pop rax # address of variable\n");
         printf("    mov rax, [rax]\n");
-        printf("    push rax #value of variable\n");
+        printf("    push rax # value of variable\n");
         return;
     case ND_ASSIGN:
         if (node->lhs->kind == ND_LVAR)
@@ -167,7 +167,7 @@ void gen_expr(Node *node)
         gen_expr(node->rhs);
         printf("    pop rdi\n");
         printf("    pop rax\n");
-        printf("    mov [rax], rdi #assign\n");
+        printf("    mov [rax], rdi # assign\n");
         printf("    push rdi\n");
         return;
     case ND_FUNCCALL:
