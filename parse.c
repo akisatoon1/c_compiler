@@ -363,7 +363,12 @@ Node *unary()
         Node *node = calloc(1, sizeof(Node));
         node->kind = ND_DEREF;
         node->lhs = unary();
-        // node->ty = node->lhs->ty->ptr_to;
+
+        if (node->lhs->kind == ND_LVAR)
+        {
+            node->ty = node->lhs->ty->ptr_to;
+        }
+
         return node;
     }
     if (consume_reserved("&"))

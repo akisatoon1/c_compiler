@@ -21,7 +21,7 @@ void gen_lval(Node *node)
     }
     printf("    mov rax, rbp\n");
     printf("    sub rax, %d\n", node->var->offset);
-    printf("    push rax\n");
+    printf("    push rax #address of variable\n");
 }
 
 void gen_function(Function *func)
@@ -30,7 +30,7 @@ void gen_function(Function *func)
     printf("%s:\n", func->name);
     printf("    push rbp\n");
     printf("    mov rbp, rsp\n");
-    printf("    sub rsp, %d\n", func->stack_size);
+    printf("    sub rsp, %d #allocate function stack for local variables\n", func->stack_size);
     int nargs = 0;
     for (LVar *param = func->params; param; param = param->next)
     {
@@ -55,7 +55,7 @@ void gen_stmt(Node *node)
     {
     case ND_RETURN:
         gen_expr(node->lhs);
-        printf("    pop rax\n");
+        printf("    pop rax #return value\n");
         printf("    mov rsp, rbp\n");
         printf("    pop rbp\n");
         printf("    ret\n");
@@ -68,18 +68,15 @@ void gen_stmt(Node *node)
         {
             printf("    je .Lelse%d\n", Lelse);
             gen_stmt(node->then);
-            printf("    pop rax\n");
             printf("    jmp .Lend%d\n", Lend);
             printf(".Lelse%d:\n", Lelse);
             gen_stmt(node->_else);
-            printf("    pop rax\n");
             Lelse++;
         }
         else
         {
             printf("    je .Lend%d\n", Lend);
             gen_stmt(node->then);
-            printf("    pop rax\n");
         }
         printf(".Lend%d:\n", Lend);
         Lend++;
@@ -91,7 +88,6 @@ void gen_stmt(Node *node)
         printf("    cmp rax, 0\n");
         printf("    je .Lend%d\n", Lend);
         gen_stmt(node->then);
-        printf("    pop rax\n");
         printf("    jmp .Lbegin%d\n", Lbegin);
         printf(".Lend%d:\n", Lend);
         Lend++;
@@ -116,7 +112,6 @@ void gen_stmt(Node *node)
         printf("    cmp rax, 0\n");
         printf("    je .Lend%d\n", Lend);
         gen_stmt(node->then);
-        printf("    pop rax\n");
         if (node->inc)
         {
             gen_expr(node->inc);
@@ -128,18 +123,16 @@ void gen_stmt(Node *node)
         Lend++;
         return;
     case ND_TYPE_DEF:
-        // stmtは最後に'pop rax'されるため、てきとうな数字をpushしている。
-        printf("    push 0\n");
         return;
     case ND_BLOCK:
         for (Node *n = node->body; n; n = n->next)
         {
             gen_stmt(n);
-            // printf("    pop rax\n");
         }
         return;
     default:
         gen_expr(node);
+        printf("    pop rax\n");
         return;
     }
 }
