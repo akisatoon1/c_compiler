@@ -6,10 +6,30 @@
 #include <string.h>
 #include "9cc.h"
 
+// 変数のvector-+
+LVar *locals;
+
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs)
 {
     Node *node = calloc(1, sizeof(Node));
     node->kind = kind;
+
+    if (kind == ND_ADD || kind == ND_SUB || kind == ND_ASSIGN)
+    {
+        if (lhs->ty->kind == TY_PTR)
+        {
+            node->ty = lhs->ty;
+        }
+        else if (rhs->ty->kind == TY_PTR)
+        {
+            node->ty = rhs->ty;
+        }
+        else
+            node->ty = ty_int;
+    }
+    else
+        node->ty = ty_int;
+
     node->lhs = lhs;
     node->rhs = rhs;
     return node;
@@ -19,6 +39,7 @@ Node *new_node_num(int val)
 {
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_NUM;
+    node->ty = ty_int;
     node->val = val;
     return node;
 }
@@ -74,11 +95,11 @@ Function *function(Function *func)
         expect_type("int");
 
         Type *type = calloc(1, sizeof(Type));
-        type->ty = TY_INT;
+        type->kind = TY_INT;
         while (consume_reserved("*"))
         {
             Type *type_ptr = calloc(1, sizeof(Type));
-            type_ptr->ty = TY_PTR;
+            type_ptr->kind = TY_PTR;
             type_ptr->ptr_to = type;
             type = type_ptr;
         }
@@ -99,6 +120,7 @@ Function *function(Function *func)
             lvar = new_lvar(tok_param, type);
 
             param->name = lvar->name;
+            param->ty = lvar->ty;
             param->offset = lvar->offset;
 
             locals = lvar;
@@ -213,11 +235,11 @@ Node *stmt()
         node = calloc(1, sizeof(Node));
         node->kind = ND_TYPE_DEF;
         Type *type = calloc(1, sizeof(Type));
-        type->ty = TY_INT;
+        type->kind = TY_INT;
         while (consume_reserved("*"))
         {
             Type *type_ptr = calloc(1, sizeof(Type));
-            type_ptr->ty = TY_PTR;
+            type_ptr->kind = TY_PTR;
             type_ptr->ptr_to = type;
             type = type_ptr;
         }
@@ -234,7 +256,7 @@ Node *stmt()
                 lvar = new_lvar(tok, type);
 
                 node->var = lvar;
-                node->ty = lvar->ty;
+                // node->ty = lvar->ty;
 
                 locals = lvar;
             }
@@ -363,8 +385,7 @@ Node *mul()
 }
 
 // unary = primary
-//       | ("+" | "-")? unary
-//       | ("*" | "&") unary
+//       | ("+" | "-" | "*" | "&") unary
 Node *unary()
 {
     if (consume_reserved("+"))
@@ -378,21 +399,25 @@ Node *unary()
     if (consume_reserved("*"))
     {
         Node *node = calloc(1, sizeof(Node));
+
         node->kind = ND_DEREF;
         node->lhs = unary();
-
-        if (node->lhs->kind == ND_LVAR)
-        {
-            node->ty = node->lhs->ty->ptr_to;
-        }
+        node->ty = node->lhs->ty->ptr_to;
 
         return node;
     }
     if (consume_reserved("&"))
     {
+        Type *ty = calloc(1, sizeof(Type));
         Node *node = calloc(1, sizeof(Node));
+
         node->kind = ND_ADDR;
         node->lhs = unary();
+        ty->kind = TY_PTR;
+        ty->size = 8;
+        ty->ptr_to = node->lhs->ty;
+        node->ty = ty;
+
         return node;
     }
     return primary();
@@ -419,6 +444,7 @@ Node *primary()
             Node head = {};
             Node *cur = &head;
             node->kind = ND_FUNCCALL;
+            node->ty = ty_int;
             node->funcname = trim(tok->str, tok->len);
             while (!consume_reserved(")"))
             {

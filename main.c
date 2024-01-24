@@ -9,16 +9,13 @@
 // call時に16倍数へのalignmentせず
 // 符号なし整数のみ実装中。
 // 関数の識別子を保存していない。
-// 関数の型がintのみ
+// 関数の戻り値の型がintのみ
 // 全ての型のサイズが8byte
 
 // コンパイルする文字列
 char *user_input;
-Token *token;
-Node *code[100];
 
-// 変数のvector
-LVar *locals;
+Token *token;
 
 int main(int argc, char **argv)
 {

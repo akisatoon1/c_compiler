@@ -32,15 +32,20 @@ struct Token
 extern Token *token;
 
 // 型
+typedef enum
+{
+    TY_INT,
+    TY_PTR,
+} TypeKind;
+
 struct Type
 {
-    enum
-    {
-        TY_INT,
-        TY_PTR
-    } ty;
+    TypeKind kind;
     Type *ptr_to;
+    int size; // sizeof() value
 };
+
+extern Type *ty_int;
 
 // local variable
 struct LVar
@@ -82,7 +87,7 @@ typedef enum
     ND_IF,       // if
     ND_WHILE,    // while
     ND_FOR,      // for
-    ND_BLOCK,    //{}
+    ND_BLOCK,    // {}
     ND_FUNCCALL, // call function
     ND_NUM,      // Integer
     ND_DEREF,    // *
@@ -116,8 +121,6 @@ struct Node
     int val;   // Used if kind == ND_NUM
     LVar *var; // Used if kind == ND_VAR
 };
-
-extern Node *code[100];
 
 // label id
 extern int Lend;

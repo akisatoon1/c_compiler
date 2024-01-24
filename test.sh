@@ -16,6 +16,7 @@ assert() {
   fi
 }
 
+# assert 0 'int main(){int x; &x=0;return 0;}'
 assert 7 'int ptr(int **ptr){ return **ptr;} int main(){int x; int *y; int **z; x=7; y=&x; z=&y; return ptr(z);}'
 assert 5 'int ptr(int *ptr){ return *ptr;} int main(){int x; int *y; x=5; y=&x; return ptr(y);}'
 
