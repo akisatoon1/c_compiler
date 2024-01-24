@@ -72,11 +72,23 @@ Function *function(Function *func)
     {
         LVar *param = calloc(1, sizeof(LVar));
         expect_type("int");
+
+        Type *type = calloc(1, sizeof(Type));
+        type->ty = TY_INT;
+        while (consume_reserved("*"))
+        {
+            Type *type_ptr = calloc(1, sizeof(Type));
+            type_ptr->ty = TY_PTR;
+            type_ptr->ptr_to = type;
+            type = type_ptr;
+        }
+
         Token *tok_param = consume_ident();
         if (!tok_param)
         {
             error("引数には変数を指定してください。（関数定義時）");
         }
+
         LVar *lvar = find_lvar(tok_param);
         if (lvar)
         {
@@ -84,8 +96,6 @@ Function *function(Function *func)
         }
         else
         {
-            Type *type = calloc(1, sizeof(Type));
-            type->ty = TY_INT;
             lvar = new_lvar(tok_param, type);
 
             param->name = lvar->name;
@@ -94,6 +104,7 @@ Function *function(Function *func)
             locals = lvar;
         }
         cur = cur->next = param;
+
         consume_reserved(",");
     }
 

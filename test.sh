@@ -16,6 +16,9 @@ assert() {
   fi
 }
 
+assert 7 'int ptr(int **ptr){ return **ptr;} int main(){int x; int *y; int **z; x=7; y=&x; z=&y; return ptr(z);}'
+assert 5 'int ptr(int *ptr){ return *ptr;} int main(){int x; int *y; x=5; y=&x; return ptr(y);}'
+
 assert 3 'int main(){ int x; x=3; int *y; y =&x; int **z; z=&y;  return **z; }'
 assert 3 'int main(){ int x; int *y; y = &x; *y = 3; return x; }'
 
