@@ -62,20 +62,27 @@ void error_at(char *loc, char *fmt, ...)
 
     int pos = loc - user_input;
     fprintf(stderr, "%s\n", user_input);
+
+    // print space ' ' at fixed number times.
     for (int i = 0; i < pos; i++)
     {
         fprintf(stderr, "%s", " ");
     }
-    // fprintf(stderr, "%*s", pos, " ");
+
+    // point to a place where an error occurs
     fprintf(stderr, "^\n");
+
+    // print error message
     vfprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");
+
+    // print the rest of token
     fprintf(stderr, "token->str rest: '%s'\n\n", token->str);
     exit(1);
 }
 
+// (8,16)=>16, (17,16)=>32, (9,8)=>16
 int align_to(int n, int align)
 {
-    // printf("n: %d\n", n);
     return (n - 1 + align) / align * align;
 }
