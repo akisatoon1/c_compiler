@@ -70,7 +70,7 @@ void error_at(char *loc, char *fmt, ...)
     fprintf(stderr, "^\n");
     vfprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");
-    fprintf(stderr, "token->str: '%s'\n\n", token->str);
+    fprintf(stderr, "token->str rest: '%s'\n\n", token->str);
     exit(1);
 }
 

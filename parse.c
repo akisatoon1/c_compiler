@@ -23,6 +23,18 @@ Node *new_node_num(int val)
     return node;
 }
 
+LVar *new_lvar(Token *tok, Type *ty)
+{
+    LVar *lvar = calloc(1, sizeof(LVar));
+
+    lvar->next = locals;
+    lvar->name = trim(tok->str, tok->len);
+    lvar->ty = ty;
+    lvar->offset = locals->offset + 8;
+
+    return lvar;
+}
+
 // program = function*
 Function *program()
 {
@@ -72,14 +84,11 @@ Function *function(Function *func)
         }
         else
         {
-            lvar = calloc(1, sizeof(LVar));
-            lvar->next = locals;
-            lvar->name = tok_param->str;
-            lvar->len = tok_param->len;
-            lvar->offset = locals->offset + 8;
+            Type *type = calloc(1, sizeof(Type));
+            type->ty = TY_INT;
+            lvar = new_lvar(tok_param, type);
 
             param->name = lvar->name;
-            param->len = lvar->len;
             param->offset = lvar->offset;
 
             locals = lvar;
@@ -211,14 +220,11 @@ Node *stmt()
             }
             else
             {
-                lvar = calloc(1, sizeof(LVar));
-                lvar->next = locals;
-                lvar->name = tok->str;
-                lvar->ty = type;
-                lvar->len = tok->len;
-                lvar->offset = locals->offset + 8;
+                lvar = new_lvar(tok, type);
+
                 node->var = lvar;
                 node->ty = lvar->ty;
+
                 locals = lvar;
             }
         }
@@ -433,22 +439,28 @@ LVar *find_lvar(Token *tok)
 {
     for (LVar *var = locals; var; var = var->next)
     {
-        if (var->len == tok->len && !memcmp(var->name, tok->str, var->len))
-        {
+        if (!var->name)
+            continue;
+        if (!strcmp(var->name, trim(tok->str, tok->len)))
             return var;
-        }
     }
+    printf("\n");
     return NULL;
 }
 
 char *trim(char *s, int size_t)
 {
-    char *ss = calloc(size_t + 1, sizeof(char));
+    char *trimed_s = calloc(size_t + 1, sizeof(char));
     int i;
     for (i = 0; i < size_t; i++)
     {
-        ss[i] = s[i];
+        if (!s[i])
+        {
+            i++;
+            break;
+        }
+        trimed_s[i] = s[i];
     }
-    ss[i] = '\0';
-    return ss;
+    trimed_s[i] = '\0';
+    return trimed_s;
 }

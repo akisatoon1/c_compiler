@@ -48,8 +48,8 @@ struct LVar
     LVar *next;
     char *name;
     Type *ty;
-    int len;
-    int offset;
+    // int len;
+    int offset; // offset from rbp
 };
 
 extern LVar *locals;
@@ -130,8 +130,8 @@ extern char *argreg[];
 // generate
 void gen(Node *node);
 void gen_lval(Node *node);
-void gen_function(Function *func);
 void gen_stmt(Node *node);
+void gen_function(Function *func);
 void gen_expr(Node *node);
 
 // ENBF
@@ -151,6 +151,9 @@ Node *primary();
 // create node of tree
 Node *new_node_num(int);
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
+
+// create new local variable
+LVar *new_lvar(Token *tok, Type *ty);
 
 // tokenize
 Token *tokenize(char *p);
