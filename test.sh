@@ -16,18 +16,21 @@ assert() {
   fi
 }
 
-# assert 0 'int main(){int x; &x=0;return 0;}'
+assert 1 'int main(){int x; int y; x=0; y=0; int *px; int *py; int **ppx; int **ppy; px=&x; ppx=&px; py=&y; ppy=&py; return ppx-ppy;}'
+assert 1 'int main(){int x; int y; int *px; int *py; px=&x; py=&y; return px-py;}'
+
 assert 7 'int ptr(int **ptr){ return **ptr;} int main(){int x; int *y; int **z; x=7; y=&x; z=&y; return ptr(z);}'
 assert 5 'int ptr(int *ptr){ return *ptr;} int main(){int x; int *y; x=5; y=&x; return ptr(y);}'
 
 assert 3 'int main(){ int x; x=3; int *y; y =&x; int **z; z=&y;  return **z; }'
 assert 3 'int main(){ int x; int *y; y = &x; *y = 3; return x; }'
 
+assert 0 'int main(){int x; int y; x=0; y=0; int *px; int *py; int **ppx; int **ppy; px=&x; ppx=&px; py=&y; ppy=&py; return **(ppx-1);}'
 assert 3 'int main(){ int x; x=3; return *&x; }'
-assert 5 'int main(){ int x; int y; x=3; y=5; return *(&x-8); }'
+assert 5 'int main(){ int x; int y; x=3; y=5; return *(&x-1); }'
 assert 3 'int main(){ int x; x=3; return *&x; }'
 assert 3 'int main(){ int x; int *y; int **z; x=3; y=&x; z=&y; return **z; }'
-assert 3 'int main(){ int x; int y; x=3; y=5; return *(&y+8); }'
+assert 3 'int main(){ int x; int y; x=3; y=5; return *(&y+1); }'
 
 assert 34 'int fib(int a,int b){int c; c=a+b; if(c>21){ return c;} return fib(b,c);} int main(){ return fib(1,1);}'
 assert 5 'int add(int a,int b){ return a+b;} int main(){return add(2,3);}'

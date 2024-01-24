@@ -9,29 +9,52 @@
 // 変数のvector-+
 LVar *locals;
 
+// rとlが全く同じ型
+// (何回ポインタを指すか、最終的に指し示す型が何かが完全一致している型。)
+// である前提。
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs)
 {
     Node *node = calloc(1, sizeof(Node));
     node->kind = kind;
 
-    if (kind == ND_ADD || kind == ND_SUB || kind == ND_ASSIGN)
+    if (kind == ND_ADD || kind == ND_SUB)
     {
-        if (lhs->ty->kind == TY_PTR)
+        if (lhs->ty->kind == TY_PTR && rhs->ty->kind == TY_PTR)
+        {
+            // ポインタ同士の演算, 引き算のみ
+            if (kind != ND_SUB)
+                error("ポインタ同士の演算は引き算のみです。");
+            node->ty = ty_int;
+            node->lhs = lhs;
+            node->rhs = rhs;
+
+            return new_node(ND_DIV, node, new_node_num(lhs->ty->ptr_to->size));
+        }
+        else if (lhs->ty->kind == TY_PTR && rhs->ty->kind == TY_INT)
         {
             node->ty = lhs->ty;
+            rhs = new_node(ND_MUL, rhs, new_node_num(lhs->ty->ptr_to->size));
         }
-        else if (rhs->ty->kind == TY_PTR)
+        else if (lhs->ty->kind == TY_INT && rhs->ty->kind == TY_PTR)
         {
             node->ty = rhs->ty;
+            lhs = new_node(ND_MUL, lhs, new_node_num(rhs->ty->ptr_to->size));
+        }
+        else if (lhs->ty->kind == TY_INT && rhs->ty->kind == TY_INT)
+        {
+            node->ty = ty_int;
         }
         else
-            node->ty = ty_int;
+            error("型が存在しません");
     }
+    else if (kind == ND_ASSIGN)
+        node->ty = lhs->ty;
     else
         node->ty = ty_int;
 
     node->lhs = lhs;
     node->rhs = rhs;
+
     return node;
 }
 
@@ -94,12 +117,12 @@ Function *function(Function *func)
         LVar *param = calloc(1, sizeof(LVar));
         expect_type("int");
 
-        Type *type = calloc(1, sizeof(Type));
-        type->kind = TY_INT;
+        Type *type = ty_int;
         while (consume_reserved("*"))
         {
             Type *type_ptr = calloc(1, sizeof(Type));
             type_ptr->kind = TY_PTR;
+            type_ptr->size = 8;
             type_ptr->ptr_to = type;
             type = type_ptr;
         }
@@ -234,12 +257,12 @@ Node *stmt()
     {
         node = calloc(1, sizeof(Node));
         node->kind = ND_TYPE_DEF;
-        Type *type = calloc(1, sizeof(Type));
-        type->kind = TY_INT;
+        Type *type = ty_int;
         while (consume_reserved("*"))
         {
             Type *type_ptr = calloc(1, sizeof(Type));
             type_ptr->kind = TY_PTR;
+            type_ptr->size = 8;
             type_ptr->ptr_to = type;
             type = type_ptr;
         }
@@ -256,7 +279,6 @@ Node *stmt()
                 lvar = new_lvar(tok, type);
 
                 node->var = lvar;
-                // node->ty = lvar->ty;
 
                 locals = lvar;
             }
