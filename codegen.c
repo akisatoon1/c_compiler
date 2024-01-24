@@ -34,12 +34,14 @@ void gen_function(Function *func)
     int nargs = 0;
     for (LVar *param = func->params; param; param = param->next)
     {
+        if (!param->offset)
+            break;
         printf("    mov rax, rbp\n");
         printf("    sub rax, %d\n", param->offset);
         printf("    push rax\n");
         nargs++;
     }
-    for (int i = nargs - 1; i >= 0; i--)
+    for (int i = 0; i < nargs; i++)
     {
         printf("    pop rax\n");
         printf("    mov [rax], %s\n", argreg[i]);

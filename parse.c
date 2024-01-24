@@ -6,7 +6,7 @@
 #include <string.h>
 #include "9cc.h"
 
-// 変数のvector-+
+// 変数のvector
 LVar *locals;
 
 // rとlが全く同じ型
@@ -74,7 +74,7 @@ LVar *new_lvar(Token *tok, Type *ty)
     lvar->next = locals;
     lvar->name = trim(tok->str, tok->len);
     lvar->ty = ty;
-    lvar->offset = locals->offset + 8;
+    lvar->offset = locals->offset + ty->size;
 
     return lvar;
 }
@@ -110,11 +110,8 @@ Function *function(Function *func)
     }
     func->name = trim(tok->str, tok->len);
     expect_reserved("(");
-    LVar head = {};
-    LVar *cur = &head;
     while (!consume_reserved(")"))
     {
-        LVar *param = calloc(1, sizeof(LVar));
         expect_type("int");
 
         Type *type = ty_int;
@@ -141,20 +138,14 @@ Function *function(Function *func)
         else
         {
             lvar = new_lvar(tok_param, type);
-
-            param->name = lvar->name;
-            param->ty = lvar->ty;
-            param->offset = lvar->offset;
-
             locals = lvar;
         }
-        cur = cur->next = param;
 
         consume_reserved(",");
     }
 
     // params vector
-    func->params = head.next;
+    func->params = locals;
     func->body = stmt();
     func->stack_size = align_to(locals->offset, 16);
 
@@ -499,7 +490,7 @@ LVar *find_lvar(Token *tok)
     for (LVar *var = locals; var; var = var->next)
     {
         if (!var->name)
-            continue;
+            break;
         if (!strcmp(var->name, trim(tok->str, tok->len)))
             return var;
     }
