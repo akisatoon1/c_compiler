@@ -128,7 +128,8 @@ extern int Lelse;
 extern int Lbegin;
 
 // 引数のレジスタ名
-extern char *argreg[];
+extern char *argreg_64[];
+extern char *argreg_32[];
 
 // generate
 void gen(Node *node);

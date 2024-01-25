@@ -11,7 +11,8 @@ int Lbegin = 0;
 int Lend = 0;
 int Lelse = 0;
 
-char *argreg[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+char *argreg_64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+char *argreg_32[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 
 void gen_lval(Node *node)
 {
@@ -31,11 +32,13 @@ void gen_function(Function *func)
     printf("    push rbp\n");
     printf("    mov rbp, rsp\n");
     printf("    sub rsp, %d # allocate function stack for local variables\n", func->stack_size);
+
     int nargs = 0;
-    for (LVar *param = func->params; param; param = param->next)
+    int sizes[6];
+    for (LVar *param = func->params; param->offset; param = param->next)
     {
-        if (!param->offset)
-            break;
+        sizes[nargs] = param->ty->size;
+
         printf("    mov rax, rbp\n");
         printf("    sub rax, %d\n", param->offset);
         printf("    push rax\n");
@@ -44,7 +47,16 @@ void gen_function(Function *func)
     for (int i = 0; i < nargs; i++)
     {
         printf("    pop rax\n");
-        printf("    mov [rax], %s\n", argreg[i]);
+        if (sizes[nargs - i - 1] == 4)
+        {
+            printf("    mov DWORD PTR [rax], %s\n", argreg_32[i]);
+        }
+        else if (sizes[nargs - i - 1] == 8)
+        {
+            printf("    mov  QWORD PTR [rax], %s\n", argreg_64[i]);
+        }
+        else
+            error("(args)存在しないサイズです。size: %d", sizes[nargs - i]);
     }
     gen_stmt(func->body);
 
@@ -149,9 +161,21 @@ void gen_expr(Node *node)
         return;
     case ND_LVAR:
         gen_lval(node);
+
         printf("    pop rax # address of variable\n");
-        printf("    mov rax, [rax]\n");
+        if (node->ty->size == 4)
+        {
+            printf("    mov eax, DWORD PTR [rax]\n");
+            printf("    movsxd rax, eax\n");
+        }
+        else if (node->ty->size == 8)
+        {
+            printf("    mov rax, QWORD PTR [rax]\n");
+        }
+        else
+            error("(ND_LVAR)存在しないサイズです。size: %d", node->ty->size);
         printf("    push rax # value of variable\n");
+
         return;
     case ND_ASSIGN:
         if (node->lhs->kind == ND_LVAR)
@@ -169,8 +193,20 @@ void gen_expr(Node *node)
         gen_expr(node->rhs);
         printf("    pop rdi\n");
         printf("    pop rax\n");
-        printf("    mov [rax], rdi # assign\n");
+
+        if (node->lhs->ty->size == 4)
+        {
+            printf("    mov DWORD PTR [rax], edi # assign\n");
+        }
+        else if (node->lhs->ty->size == 8)
+        {
+            printf("    mov QWORd PTR [rax], rdi # assign\n");
+        }
+        else
+            error("(ND_ASSIGN)存在しないサイズです。size: %d", node->lhs->ty->size);
+
         printf("    push rdi\n");
+
         return;
     case ND_FUNCCALL:
         int nargs = 0;
@@ -181,7 +217,7 @@ void gen_expr(Node *node)
         }
         for (int i = nargs - 1; i >= 0; i--)
         {
-            printf("    pop %s\n", argreg[i]);
+            printf("    pop %s\n", argreg_64[i]);
         }
         // mov rax, 0
         // rspを16byte整列にalignしてない
@@ -191,8 +227,21 @@ void gen_expr(Node *node)
     case ND_DEREF:
         gen_expr(node->lhs);
         printf("    pop rax\n");
-        printf("    mov rax, [rax]\n");
+
+        if (node->lhs->ty->size == 4)
+        {
+            printf("    mov eax, DWORD PTR [rax]\n");
+            printf("    movsxd rax, eax\n");
+        }
+        else if (node->lhs->ty->size == 8)
+        {
+            printf("    mov rax, QWORD PTR [rax]\n");
+        }
+        else
+            error("(ND_DEREF)存在しないサイズです。size: %d", node->lhs->ty->size);
+
         printf("    push rax\n");
+
         return;
     case ND_ADDR:
         gen_lval(node->lhs);

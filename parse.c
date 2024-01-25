@@ -487,10 +487,8 @@ Node *primary()
 
 LVar *find_lvar(Token *tok)
 {
-    for (LVar *var = locals; var; var = var->next)
+    for (LVar *var = locals; var->name; var = var->next)
     {
-        if (!var->name)
-            break;
         if (!strcmp(var->name, trim(tok->str, tok->len)))
             return var;
     }
