@@ -16,6 +16,7 @@ typedef enum
     TK_NUM,      // 整数トークン
     TK_CONTROLS, // 制御文字列
     TK_TYPE,     // 型
+    TK_SIZEOF,   // sizeof
     TK_RETURN,   // return
     TK_EOF       // 入力の終わりを示すトークン
 } TokenKind;
@@ -176,6 +177,7 @@ void expect_reserved(char *op);
 bool consume_reserved(char *op);
 Token *consume_ident();
 bool consume_controls(char *s);
+bool consume_sizeof();
 bool consume_type(char *s);
 void expect_type(char *s);
 bool consume_return();

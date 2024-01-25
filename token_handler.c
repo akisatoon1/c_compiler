@@ -54,6 +54,16 @@ bool consume_controls(char *s)
     return true;
 }
 
+bool consume_sizeof()
+{
+    if (token->kind != TK_SIZEOF || strlen("sizeof") != token->len || memcmp("sizeof", token->str, token->len))
+    {
+        return false;
+    }
+    token = token->next;
+    return true;
+}
+
 bool consume_type(char *s)
 {
     if (token->kind != TK_TYPE || strlen(s) != token->len || memcmp(s, token->str, token->len))

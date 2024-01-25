@@ -397,8 +397,8 @@ Node *mul()
     }
 }
 
-// unary = primary
-//       | ("+" | "-" | "*" | "&") unary
+// unary = ("+" | "-" | "*" | "&" | "sizeof") unary
+//       | primary
 Node *unary()
 {
     if (consume_reserved("+"))
@@ -432,6 +432,13 @@ Node *unary()
         node->ty = ty;
 
         return node;
+    }
+    if (consume_sizeof())
+    {
+        Node *node = calloc(1, sizeof(Node));
+        node->lhs = unary();
+
+        return new_node_num(node->lhs->ty->size);
     }
     return primary();
 }

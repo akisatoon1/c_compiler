@@ -16,6 +16,13 @@ assert() {
   fi
 }
 
+assert 4 'int main(){return sizeof(sizeof(1));}'
+assert 8 'int main(){int *x; return sizeof (x+1);}'
+assert 4 'int main(){int x; return sizeof (x+1);}'
+assert 8 'int main(){int *x; return sizeof x;}'
+assert 4 'int main(){int x; return sizeof x;}'
+assert 4 'int main(){return sizeof 1;}'
+
 assert 1 'int main(){int x; int y; x=0; y=0; int *px; int *py; int **ppx; int **ppy; px=&x; ppx=&px; py=&y; ppy=&py; return ppx-ppy;}'
 assert 1 'int main(){int x; int y; int *px; int *py; px=&x; py=&y; return px-py;}'
 

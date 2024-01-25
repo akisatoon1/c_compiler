@@ -80,6 +80,12 @@ Token *tokenize(char *p)
             p += 3;
             continue;
         }
+        if (is_keyword(p, "sizeof"))
+        {
+            cur = new_token(TK_SIZEOF, cur, p, 6);
+            p += 6;
+            continue;
+        }
         if (is_ident1(*p))
         {
             char *q = p;
