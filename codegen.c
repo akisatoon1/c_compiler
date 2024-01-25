@@ -161,8 +161,14 @@ void gen_expr(Node *node)
         return;
     case ND_LVAR:
         gen_lval(node);
-
         printf("    pop rax # address of variable\n");
+
+        if (node->ty->kind == TY_ARRAY)
+        {
+            printf("    push rax\n");
+            return;
+        }
+
         if (node->ty->size == 4)
         {
             printf("    mov eax, DWORD PTR [rax]\n");

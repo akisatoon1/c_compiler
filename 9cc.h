@@ -37,6 +37,7 @@ typedef enum
 {
     TY_INT,
     TY_PTR,
+    TY_ARRAY,
 } TypeKind;
 
 struct Type
@@ -44,6 +45,9 @@ struct Type
     TypeKind kind;
     Type *ptr_to;
     int size; // sizeof() value
+
+    // Array
+    int array_len;
 };
 
 extern Type *ty_int;
@@ -155,6 +159,7 @@ Node *primary();
 
 // create node of tree
 Node *new_node_num(int);
+Node *new_node_lvar(Node *node, Token *tok);
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 
 // create new local variable

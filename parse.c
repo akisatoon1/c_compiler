@@ -19,7 +19,7 @@ Node *new_node(NodeKind kind, Node *lhs, Node *rhs)
 
     if (kind == ND_ADD || kind == ND_SUB)
     {
-        if (lhs->ty->kind == TY_PTR && rhs->ty->kind == TY_PTR)
+        if (lhs->ty->ptr_to && rhs->ty->ptr_to)
         {
             // ポインタ同士の演算, 引き算のみ
             if (kind != ND_SUB)
@@ -30,17 +30,17 @@ Node *new_node(NodeKind kind, Node *lhs, Node *rhs)
 
             return new_node(ND_DIV, node, new_node_num(lhs->ty->ptr_to->size));
         }
-        else if (lhs->ty->kind == TY_PTR && rhs->ty->kind == TY_INT)
+        else if (lhs->ty->ptr_to && !rhs->ty->ptr_to)
         {
             node->ty = lhs->ty;
             rhs = new_node(ND_MUL, rhs, new_node_num(lhs->ty->ptr_to->size));
         }
-        else if (lhs->ty->kind == TY_INT && rhs->ty->kind == TY_PTR)
+        else if (!lhs->ty->ptr_to && rhs->ty->ptr_to)
         {
             node->ty = rhs->ty;
             lhs = new_node(ND_MUL, lhs, new_node_num(rhs->ty->ptr_to->size));
         }
-        else if (lhs->ty->kind == TY_INT && rhs->ty->kind == TY_INT)
+        else if (!lhs->ty->ptr_to && !rhs->ty->ptr_to)
         {
             node->ty = ty_int;
         }
@@ -64,6 +64,23 @@ Node *new_node_num(int val)
     node->kind = ND_NUM;
     node->ty = ty_int;
     node->val = val;
+    return node;
+}
+
+Node *new_node_lvar(Node *node, Token *tok)
+{
+    node->kind = ND_LVAR;
+    LVar *lvar = find_lvar(tok);
+    if (lvar)
+    {
+        node->var = lvar;
+        node->ty = lvar->ty;
+    }
+    else
+    {
+        error_at(tok->str, "'%s'は宣言されていない変数名です。", trim(tok->str, tok->len));
+    }
+
     return node;
 }
 
@@ -99,7 +116,7 @@ Function *program()
 }
 
 // function = "int" ident "(" ")" "{" stmt* "}"
-//          | "int" ident "(" ident ("," ident)* ")" "{" stmt* "}"
+//          | "int" ident "(" "int"  "*"* ident ("," "int"  "*"* ident)* ")" "{" stmt* "}"
 Function *function(Function *func)
 {
     expect_type("int");
@@ -157,7 +174,7 @@ Function *function(Function *func)
 //      | "if" "(" expr ")" stmt ("else" stmt)?
 //      | "while" "(" expr ")" stmt
 //      | "for" "(" expr? ";" expr? ";" expr? ")" stmt
-//      | "int" "*"* ident ";"
+//      | "int" "*"* ident ("[" num "]")? ";"
 //      | "{" stmt* "}"
 Node *stmt()
 {
@@ -260,10 +277,23 @@ Node *stmt()
         Token *tok = consume_ident();
         if (tok)
         {
+            if (consume_reserved("["))
+            {
+                Type *type_array = calloc(1, sizeof(Type));
+                type_array->kind = TY_ARRAY;
+                type_array->array_len = expect_number();
+                type_array->size = (type->size) * (type_array->array_len);
+                type_array->ptr_to = type;
+
+                type = type_array;
+
+                expect_reserved("]");
+            }
+
             LVar *lvar = find_lvar(tok);
             if (lvar)
             {
-                error_at(tok->str, "'%s'は既に使われている変数名です。", trim(tok->str, tok->len));
+                error_at(tok->str, "'%s'は既に使われている変数または配列名です。", trim(tok->str, tok->len));
             }
             else
             {
@@ -276,7 +306,7 @@ Node *stmt()
         }
         else
         {
-            error_at(token->str, "変数名ではありません。");
+            error_at(token->str, "変数または配列名ではありません。");
         }
         expect_reserved(";");
     }
@@ -424,8 +454,11 @@ Node *unary()
         Type *ty = calloc(1, sizeof(Type));
         Node *node = calloc(1, sizeof(Node));
 
-        node->kind = ND_ADDR;
         node->lhs = unary();
+        if (node->lhs->ty->kind == TY_ARRAY)
+            return new_node_lvar(node, token);
+
+        node->kind = ND_ADDR;
         ty->kind = TY_PTR;
         ty->size = 8;
         ty->ptr_to = node->lhs->ty;
@@ -475,17 +508,7 @@ Node *primary()
         }
         else
         {
-            node->kind = ND_LVAR;
-            LVar *lvar = find_lvar(tok);
-            if (lvar)
-            {
-                node->var = lvar;
-                node->ty = lvar->ty;
-            }
-            else
-            {
-                error_at(tok->str, "'%s'は宣言されていない変数名です。", trim(tok->str, tok->len));
-            }
+            node = new_node_lvar(node, tok);
         }
         return node;
     }
@@ -511,7 +534,6 @@ char *trim(char *s, int size_t)
     {
         if (!s[i])
         {
-            i++;
             break;
         }
         trimed_s[i] = s[i];
