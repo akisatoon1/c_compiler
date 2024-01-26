@@ -16,6 +16,8 @@ assert() {
   fi
 }
 
+assert 4 'int main(){int a[2]; a[0]=1; a[1]=2; return sizeof (a[0]+a[1]);}'
+assert 3 'int main(){int a[2]; a[0]=1; a[1]=2; return a[0]+a[1];}'
 assert 20 'int main(){int a[5]; return sizeof(a);}'
 assert 3 'int main(){int a[2]; *a=1; *(a+1)=2; int *p; p=a; return *p+*(p+1);}'
 

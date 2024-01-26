@@ -479,6 +479,7 @@ Node *unary()
 // primary = "(" expr ")"
 //         | ident ("(" ")")?
 //         | ident "(" expr ("," expr)* ")"
+//         | ident "[" expr "]"
 //         | num
 Node *primary()
 {
@@ -509,9 +510,23 @@ Node *primary()
         else
         {
             node = new_node_lvar(node, tok);
+            if (consume_reserved("["))
+            {
+                node = new_node(ND_ADD, node, expr());
+                expect_reserved("]");
+
+                Node *node_top = calloc(1, sizeof(Node));
+
+                node_top->kind = ND_DEREF;
+                node_top->lhs = node;
+                node_top->ty = node->lhs->ty->ptr_to;
+
+                return node_top;
+            }
         }
         return node;
     }
+
     return new_node_num(expect_number());
 }
 
