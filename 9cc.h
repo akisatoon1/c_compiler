@@ -160,7 +160,7 @@ Node *primary();
 // create node of tree
 Node *new_node_num(int);
 Node *new_node_lvar(Node *node, Token *tok);
-Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
+Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs);
 
 // create new local variable
 LVar *new_lvar(Token *tok, Type *ty);

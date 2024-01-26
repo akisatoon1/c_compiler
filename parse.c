@@ -12,7 +12,7 @@ LVar *locals;
 // rとlが全く同じ型
 // (何回ポインタを指すか、最終的に指し示す型が何かが完全一致している型。)
 // である前提。
-Node *new_node(NodeKind kind, Node *lhs, Node *rhs)
+Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs)
 {
     Node *node = calloc(1, sizeof(Node));
     node->kind = kind;
@@ -28,17 +28,17 @@ Node *new_node(NodeKind kind, Node *lhs, Node *rhs)
             node->lhs = lhs;
             node->rhs = rhs;
 
-            return new_node(ND_DIV, node, new_node_num(lhs->ty->ptr_to->size));
+            return new_node_binary(ND_DIV, node, new_node_num(lhs->ty->ptr_to->size));
         }
         else if (lhs->ty->ptr_to && !rhs->ty->ptr_to)
         {
             node->ty = lhs->ty;
-            rhs = new_node(ND_MUL, rhs, new_node_num(lhs->ty->ptr_to->size));
+            rhs = new_node_binary(ND_MUL, rhs, new_node_num(lhs->ty->ptr_to->size));
         }
         else if (!lhs->ty->ptr_to && rhs->ty->ptr_to)
         {
             node->ty = rhs->ty;
-            lhs = new_node(ND_MUL, lhs, new_node_num(rhs->ty->ptr_to->size));
+            lhs = new_node_binary(ND_MUL, lhs, new_node_num(rhs->ty->ptr_to->size));
         }
         else if (!lhs->ty->ptr_to && !rhs->ty->ptr_to)
         {
@@ -330,7 +330,7 @@ Node *assign()
     Node *node = equality();
     if (consume_reserved("="))
     {
-        node = new_node(ND_ASSIGN, node, assign());
+        node = new_node_binary(ND_ASSIGN, node, assign());
     }
     return node;
 }
@@ -343,11 +343,11 @@ Node *equality()
     {
         if (consume_reserved("=="))
         {
-            node = new_node(ND_EQ, node, relational());
+            node = new_node_binary(ND_EQ, node, relational());
         }
         else if (consume_reserved("!="))
         {
-            node = new_node(ND_NE, node, relational());
+            node = new_node_binary(ND_NE, node, relational());
         }
         else
         {
@@ -364,19 +364,19 @@ Node *relational()
     {
         if (consume_reserved("<="))
         {
-            node = new_node(ND_LE, node, add());
+            node = new_node_binary(ND_LE, node, add());
         }
         else if (consume_reserved(">="))
         {
-            node = new_node(ND_LE, add(), node);
+            node = new_node_binary(ND_LE, add(), node);
         }
         else if (consume_reserved("<"))
         {
-            node = new_node(ND_LT, node, add());
+            node = new_node_binary(ND_LT, node, add());
         }
         else if (consume_reserved(">"))
         {
-            node = new_node(ND_LT, add(), node);
+            node = new_node_binary(ND_LT, add(), node);
         }
         else
         {
@@ -393,11 +393,11 @@ Node *add()
     {
         if (consume_reserved("+"))
         {
-            node = new_node(ND_ADD, node, mul());
+            node = new_node_binary(ND_ADD, node, mul());
         }
         else if (consume_reserved("-"))
         {
-            node = new_node(ND_SUB, node, mul());
+            node = new_node_binary(ND_SUB, node, mul());
         }
         else
         {
@@ -414,11 +414,11 @@ Node *mul()
     {
         if (consume_reserved("*"))
         {
-            node = new_node(ND_MUL, node, unary());
+            node = new_node_binary(ND_MUL, node, unary());
         }
         else if (consume_reserved("/"))
         {
-            node = new_node(ND_DIV, node, unary());
+            node = new_node_binary(ND_DIV, node, unary());
         }
         else
         {
@@ -437,7 +437,7 @@ Node *unary()
     }
     if (consume_reserved("-"))
     {
-        return new_node(ND_SUB, new_node_num(0), unary());
+        return new_node_binary(ND_SUB, new_node_num(0), unary());
     }
     if (consume_reserved("*"))
     {
@@ -512,7 +512,7 @@ Node *primary()
             node = new_node_lvar(node, tok);
             if (consume_reserved("["))
             {
-                node = new_node(ND_ADD, node, expr());
+                node = new_node_binary(ND_ADD, node, expr());
                 expect_reserved("]");
 
                 Node *node_top = calloc(1, sizeof(Node));
