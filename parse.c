@@ -9,6 +9,14 @@
 // 変数のvector
 LVar *locals;
 
+Node *new_node(NodeKind kind, Node *lhs)
+{
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = kind;
+    node->lhs = lhs;
+    return node;
+}
+
 // rとlが全く同じ型
 // (何回ポインタを指すか、最終的に指し示す型が何かが完全一致している型。)
 // である前提。
@@ -181,9 +189,7 @@ Node *stmt()
     Node *node;
     if (consume_return())
     {
-        node = calloc(1, sizeof(Node));
-        node->kind = ND_RETURN;
-        node->lhs = expr();
+        node = new_node(ND_RETURN, expr());
         expect_reserved(";");
     }
     else if (consume_reserved("{"))
@@ -441,10 +447,7 @@ Node *unary()
     }
     if (consume_reserved("*"))
     {
-        Node *node = calloc(1, sizeof(Node));
-
-        node->kind = ND_DEREF;
-        node->lhs = unary();
+        Node *node = new_node(ND_DEREF, unary());
         node->ty = node->lhs->ty->ptr_to;
 
         return node;
@@ -515,10 +518,7 @@ Node *primary()
                 node = new_node_binary(ND_ADD, node, expr());
                 expect_reserved("]");
 
-                Node *node_top = calloc(1, sizeof(Node));
-
-                node_top->kind = ND_DEREF;
-                node_top->lhs = node;
+                Node *node_top = new_node(ND_DEREF, node);
                 node_top->ty = node->lhs->ty->ptr_to;
 
                 return node_top;

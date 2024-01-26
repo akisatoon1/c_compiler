@@ -138,7 +138,7 @@ extern char *argreg_32[];
 
 // generate
 void gen(Node *node);
-void gen_lval(Node *node);
+void gen_lval_address(Node *node);
 void gen_stmt(Node *node);
 void gen_function(Function *func);
 void gen_expr(Node *node);
@@ -159,6 +159,7 @@ Node *primary();
 
 // create node of tree
 Node *new_node_num(int);
+Node *new_node(NodeKind kind, Node *lhs);
 Node *new_node_lvar(Node *node, Token *tok);
 Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs);
 

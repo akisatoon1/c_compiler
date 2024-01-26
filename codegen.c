@@ -14,7 +14,7 @@ int Lelse = 0;
 char *argreg_64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 char *argreg_32[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 
-void gen_lval(Node *node)
+void gen_lval_address(Node *node)
 {
     if (node->kind != ND_LVAR)
     {
@@ -160,7 +160,7 @@ void gen_expr(Node *node)
         printf("    push %d\n", node->val);
         return;
     case ND_LVAR:
-        gen_lval(node);
+        gen_lval_address(node);
         printf("    pop rax # address of variable\n");
 
         if (node->ty->kind == TY_ARRAY)
@@ -186,7 +186,7 @@ void gen_expr(Node *node)
     case ND_ASSIGN:
         if (node->lhs->kind == ND_LVAR)
         {
-            gen_lval(node->lhs);
+            gen_lval_address(node->lhs);
         }
         else if (node->lhs->kind == ND_DEREF)
         {
@@ -250,7 +250,7 @@ void gen_expr(Node *node)
 
         return;
     case ND_ADDR:
-        gen_lval(node->lhs);
+        gen_lval_address(node->lhs);
         return;
     default:
         break;
