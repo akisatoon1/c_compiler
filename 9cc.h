@@ -166,6 +166,9 @@ Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs);
 // create new local variable
 LVar *new_lvar(Token *tok, Type *ty);
 
+// create new type
+Type *new_type();
+
 // tokenize
 Token *tokenize(char *p);
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);

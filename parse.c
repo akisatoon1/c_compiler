@@ -138,16 +138,7 @@ Function *function(Function *func)
     while (!consume_reserved(")"))
     {
         expect_type("int");
-
-        Type *type = ty_int;
-        while (consume_reserved("*"))
-        {
-            Type *type_ptr = calloc(1, sizeof(Type));
-            type_ptr->kind = TY_PTR;
-            type_ptr->size = 8;
-            type_ptr->ptr_to = type;
-            type = type_ptr;
-        }
+        Type *type = new_type();
 
         Token *tok_param = consume_ident();
         if (!tok_param)
@@ -271,15 +262,8 @@ Node *stmt()
     {
         node = calloc(1, sizeof(Node));
         node->kind = ND_TYPE_DEF;
-        Type *type = ty_int;
-        while (consume_reserved("*"))
-        {
-            Type *type_ptr = calloc(1, sizeof(Type));
-            type_ptr->kind = TY_PTR;
-            type_ptr->size = 8;
-            type_ptr->ptr_to = type;
-            type = type_ptr;
-        }
+        Type *type = new_type();
+
         Token *tok = consume_ident();
         if (tok)
         {
