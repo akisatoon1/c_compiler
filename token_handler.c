@@ -98,7 +98,7 @@ void expect_reserved(char *op)
 {
     if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(op, token->str, token->len))
     {
-        error("'%s'ではありません", op);
+        error_at(token->str, "'%s'ではありません", op);
     }
     token = token->next;
     return;

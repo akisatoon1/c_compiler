@@ -31,9 +31,10 @@ assert 4 'int main(){return sizeof 1;}'
 assert 1 'int main(){int x; int y; x=0; y=0; int *px; int *py; int **ppx; int **ppy; px=&x; ppx=&px; py=&y; ppy=&py; return ppx-ppy;}'
 assert 1 'int main(){int x; int y; int *px; int *py; px=&x; py=&y; return px-py;}'
 
+assert 73 'int *add(int *x, int y){return x+y;} int main(){int a[5]; a[4]=73; int *p; p=add(a,4); return *p;}'
+assert 32 'int *addr(int x){return &x;} int main(){int x; x=32; int *p; p=addr(x); return *p;}'
 assert 7 'int ptr(int **ptr){ return **ptr;} int main(){int x; int *y; int **z; x=7; y=&x; z=&y; return ptr(z);}'
 assert 5 'int ptr(int *ptr){ return *ptr;} int main(){int x; int *y; x=5; y=&x; return ptr(y);}'
-
 assert 3 'int main(){ int x; x=3; int *y; y =&x; int **z; z=&y;  return **z; }'
 assert 3 'int main(){ int x; int *y; y = &x; *y = 3; return x; }'
 

@@ -72,8 +72,12 @@ struct Function
 
     Node *body;
     LVar *locals;
+    Type *ty; // return type
     int stack_size;
 };
+
+// function vector (parse)
+extern Function *global_funcs;
 
 // NodeKind
 typedef enum
@@ -147,7 +151,6 @@ void gen_expr(Node *node);
 Function *program();
 Function *function();
 Node *stmt();
-// Node *compound_stmt();
 Node *expr();
 Node *assign();
 Node *equality();
@@ -195,8 +198,9 @@ bool consume_return();
 void error_at(char *loc, char *fmt, ...);
 void error(char *, ...);
 
-// var
+// find
 LVar *find_lvar(Token *tok);
+Function *find_func(Token *tok);
 
 // trim
 char *trim(char *s, int size_t);

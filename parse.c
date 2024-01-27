@@ -9,6 +9,9 @@
 // 変数のvector
 LVar *locals;
 
+// function vector (parse)
+Function *global_funcs;
+
 Node *new_node(NodeKind kind, Node *lhs)
 {
     Node *node = calloc(1, sizeof(Node));
@@ -107,14 +110,16 @@ LVar *new_lvar(Token *tok, Type *ty)
 // program = function*
 Function *program()
 {
+    global_funcs = calloc(1, sizeof(Function));
+
     Function head = {};
     Function *cur = &head;
     while (!at_eof())
     {
-        Function *func = calloc(1, sizeof(Function));
         locals = calloc(1, sizeof(LVar));
-        func = function(func);
+        Function *func = function();
         func->locals = locals;
+
         cur = cur->next = func;
     }
     cur->next = NULL;
@@ -123,17 +128,34 @@ Function *program()
     return head.next;
 }
 
-// function = "int" ident "(" ")" "{" stmt* "}"
-//          | "int" ident "(" "int"  "*"* ident ("," "int"  "*"* ident)* ")" "{" stmt* "}"
-Function *function(Function *func)
+// function = "int" "*"* ident "(" ")" "{" stmt* "}"
+//          | "int" "*"* ident "(" "int"  "*"* ident ("," "int"  "*"* ident)* ")" "{" stmt* "}"
+//          | "int" "*"* ident ("(" num ")")?;
+Function *function()
 {
+    Function *func = calloc(1, sizeof(Function));
+
     expect_type("int");
+    Type *return_ty = new_type();
+    func->ty = return_ty;
+
     Token *tok = consume_ident();
     if (!tok)
     {
         error("関数名がありません。");
     }
+    if (find_func(tok))
+        error("既に定義済みの関数です。");
+
     func->name = trim(tok->str, tok->len);
+
+    // function vector (parse)
+    Function *tmp = calloc(1, sizeof(Function));
+    tmp->name = func->name;
+    tmp->ty = func->ty;
+    tmp->next = global_funcs;
+    global_funcs = tmp;
+
     expect_reserved("(");
     while (!consume_reserved(")"))
     {
@@ -162,6 +184,7 @@ Function *function(Function *func)
 
     // params vector
     func->params = locals;
+
     func->body = stmt();
     func->stack_size = align_to(locals->offset, 16);
 
@@ -482,10 +505,14 @@ Node *primary()
         Node *node = calloc(1, sizeof(Node));
         if (consume_reserved("("))
         {
+            Function *func = find_func(tok);
+            if (!func)
+                error_at(tok->str, "定義されていない関数です。");
+
             Node head = {};
             Node *cur = &head;
             node->kind = ND_FUNCCALL;
-            node->ty = ty_int;
+            node->ty = func->ty;
             node->funcname = trim(tok->str, tok->len);
             while (!consume_reserved(")"))
             {
@@ -521,7 +548,16 @@ LVar *find_lvar(Token *tok)
         if (!strcmp(var->name, trim(tok->str, tok->len)))
             return var;
     }
-    printf("\n");
+    return NULL;
+}
+
+Function *find_func(Token *tok)
+{
+    for (Function *func = global_funcs; func->name; func = func->next)
+    {
+        if (!strcmp(func->name, trim(tok->str, tok->len)))
+            return func;
+    }
     return NULL;
 }
 

@@ -9,8 +9,6 @@
 // 注意点
 // call時に16倍数へのalignmentせず
 // 符号付き整数(int)のみ実装中。ただしマイナスの表現は実装せず。
-// 関数の名前を保存していない。
-// 関数の戻り値の型がintのみ
 // ポインタの演算や代入は、全て同じ型であると仮定。
 // a[num]は認めるが、num[a]は認められない(本来は認められるが使わないので認められないことにした)。
 
@@ -33,7 +31,7 @@ int main(int argc, char **argv)
     user_input = argv[1];
     token = tokenize(user_input);
 
-    // function vector
+    // function vector (main)
     Function *funcs = program();
 
     printf(".intel_syntax noprefix\n");
