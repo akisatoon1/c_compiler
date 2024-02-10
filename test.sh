@@ -16,6 +16,17 @@ assert() {
   fi
 }
 
+assert 0 'int x; int main() { return x; }'
+assert 7 'int x; int y; int main() { x=3; y=4; return x+y; }'
+assert 0 'int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[0]; }'
+assert 1 'int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[1]; }'
+assert 2 'int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[2]; }'
+assert 3 'int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[3]; }'
+assert 4 'int x; int main() { return sizeof(x); }'
+assert 16 'int x[4]; int main() { return sizeof(x); }'
+assert 46 'int x; int main(){x=34; int x; x=46; return x;}'
+assert 30 'int x; int main(){x=13; return x+17;}'
+
 assert 4 'int main(){int a[2]; a[0]=1; a[1]=2; return sizeof (a[0]+a[1]);}'
 assert 3 'int main(){int a[2]; a[0]=1; a[1]=2; return a[0]+a[1];}'
 assert 20 'int main(){int a[5]; return sizeof(a);}'

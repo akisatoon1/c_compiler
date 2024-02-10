@@ -4,9 +4,8 @@ extern char *user_input;
 
 typedef struct Node Node;
 typedef struct Token Token;
-typedef struct LVar LVar;
+typedef struct Obj Obj;
 typedef struct Type Type;
-typedef struct Function Function;
 
 // TokenKind
 typedef enum
@@ -52,32 +51,29 @@ struct Type
 
 extern Type *ty_int;
 
-// local variable
-struct LVar
+// variable or function
+struct Obj
 {
-    LVar *next;
+    Obj *next;
     char *name;
     Type *ty;
-    // int len;
-    int offset; // offset from rbp
-};
+    bool is_local; // local or global/function
 
-extern LVar *locals;
+    // local variable
+    int offset;
 
-struct Function
-{
-    Function *next;
-    char *name;
-    LVar *params;
+    // global variable or function
+    bool is_function;
 
+    // funciton
+    Obj *params;
     Node *body;
-    LVar *locals;
-    Type *ty; // return type
+    Obj *locals;
     int stack_size;
 };
 
-// function vector (parse)
-extern Function *global_funcs;
+extern Obj *locals;
+extern Obj *globals;
 
 // NodeKind
 typedef enum
@@ -92,6 +88,7 @@ typedef enum
     ND_LE,       // <=
     ND_ASSIGN,   // =
     ND_LVAR,     // ローカル変数
+    ND_GVAR,     // global variable
     ND_RETURN,   // return
     ND_IF,       // if
     ND_WHILE,    // while
@@ -127,8 +124,8 @@ struct Node
     char *funcname; // function name
     Node *args;     // arguments
 
-    int val;   // Used if kind == ND_NUM
-    LVar *var; // Used if kind == ND_VAR
+    int val;  // Used if kind == ND_NUM
+    Obj *var; // Used if kind == ND_VAR
 };
 
 // label id
@@ -143,13 +140,16 @@ extern char *argreg_32[];
 // generate
 void gen(Node *node);
 void gen_lval_address(Node *node);
+void gen_gvar_address(Node *node);
 void gen_stmt(Node *node);
-void gen_function(Function *func);
+void gen_function(Obj *func);
+void gen_gvar(Obj *gvar);
 void gen_expr(Node *node);
 
 // ENBF
-Function *program();
-Function *function();
+Obj *program();
+Obj *global_variable(Type *ty, Token *tok);
+Obj *function_def(Type *ty, Token *tok);
 Node *stmt();
 Node *expr();
 Node *assign();
@@ -166,8 +166,9 @@ Node *new_node(NodeKind kind, Node *lhs);
 Node *new_node_lvar(Node *node, Token *tok);
 Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs);
 
-// create new local variable
-LVar *new_lvar(Token *tok, Type *ty);
+// create new variable
+Obj *new_lvar(Token *tok, Type *ty);
+Obj *new_gvar(Token *tok, Type *ty);
 
 // create new type
 Type *new_type();
@@ -199,8 +200,8 @@ void error_at(char *loc, char *fmt, ...);
 void error(char *, ...);
 
 // find
-LVar *find_lvar(Token *tok);
-Function *find_func(Token *tok);
+Obj *find_lvar(Token *tok);
+Obj *find_gvar(Token *tok);
 
 // trim
 char *trim(char *s, int size_t);

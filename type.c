@@ -8,6 +8,7 @@
 
 Type *ty_int = &(Type){TY_INT, NULL, 4, 0};
 
+// トークンを知らんとこで読み込んでるのでわかりづらい。
 // when type defenition, return type.
 Type *new_type()
 {

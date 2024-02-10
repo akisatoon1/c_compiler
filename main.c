@@ -9,11 +9,20 @@
 // 注意点
 // call時に16倍数へのalignmentせず
 // 符号付き整数(int)のみ実装中。ただしマイナスの表現は実装せず。
-// ポインタの演算や代入は、全て同じ型であると仮定。
+// 関数が定義済みかどうかのチェックは無い。(したがって戻り値の型は常にint)
+// ポインタの演算や代入は、全て同じ型(ポインタの深さも含め)であると仮定。
 // a[num]は認めるが、num[a]は認められない(本来は認められるが使わないので認められないことにした)。
 
 // 実装済み
 // int 4byte, ptr 8byte
+
+// これから実装するもの
+// varとfunctionをすべてObj型にまとめる
+// globals(function or global-var)を追加
+// bnfを変更
+// find_gvar(){}を追加
+// programがglobalsを返すように変更する
+// globalsに合わせたcodegen(){}を実装 <-
 
 // コンパイルする文字列
 char *user_input;
@@ -31,15 +40,20 @@ int main(int argc, char **argv)
     user_input = argv[1];
     token = tokenize(user_input);
 
-    // function vector (main)
-    Function *funcs = program();
+    // function or global variable vector (main)
+    Obj *prog = program();
 
     printf(".intel_syntax noprefix\n");
 
-    while (funcs)
+    while (prog->name)
     {
-        gen_function(funcs);
-        funcs = funcs->next;
+        if (prog->is_local)
+            error("ローカル変数ではありません。");
+        if (prog->is_function)
+            gen_function(prog);
+        else
+            gen_gvar(prog);
+        prog = prog->next;
     }
 
     return 0;

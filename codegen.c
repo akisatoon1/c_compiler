@@ -18,15 +18,37 @@ void gen_lval_address(Node *node)
 {
     if (node->kind != ND_LVAR)
     {
-        error("代入の左辺値が変数ではありません。");
+        error("代入の左辺値が変数ではありません。(lvar)");
     }
     printf("    mov rax, rbp\n");
     printf("    sub rax, %d\n", node->var->offset);
-    printf("    push rax # address of variable\n");
+    printf("    push rax # address of local variable\n");
+    return;
 }
 
-void gen_function(Function *func)
+void gen_gvar_address(Node *node)
 {
+    if (node->kind != ND_GVAR)
+    {
+        error("代入の左辺値が変数ではありません。(gvar)");
+    }
+    printf("    lea rax, %s[rip]\n", node->var->name);
+    printf("    push rax # address of global variable\n");
+    return;
+}
+
+void gen_gvar(Obj *gvar)
+{
+    printf(".data\n");
+    printf(".globl %s\n", gvar->name);
+    printf("%s:\n", gvar->name);
+    printf("    .zero %d\n", gvar->ty->size);
+    return;
+}
+
+void gen_function(Obj *func)
+{
+    printf(".text\n");
     printf(".globl %s\n", func->name);
     printf("%s:\n", func->name);
     printf("    push rbp\n");
@@ -35,7 +57,7 @@ void gen_function(Function *func)
 
     int nargs = 0;
     int sizes[6];
-    for (LVar *param = func->params; param->offset; param = param->next)
+    for (Obj *param = func->params; param->offset; param = param->next)
     {
         sizes[nargs] = param->ty->size;
 
@@ -183,11 +205,34 @@ void gen_expr(Node *node)
         printf("    push rax # value of variable\n");
 
         return;
+    case ND_GVAR:
+        gen_gvar_address(node);
+        if (node->ty->kind == TY_ARRAY)
+        {
+            // printf("    pop rax\n");
+            // printf("    push rax\n");
+            return;
+        }
+
+        if (node->ty->size == 4)
+        {
+            printf("    pop rax\n");
+            printf("    mov eax, DWORD PTR [rax]\n");
+            printf("    movsxd rax, eax\n");
+        }
+        else if (node->ty->size == 8)
+        {
+            printf("    mov rax, QWORD PTR [rax]\n");
+        }
+        else
+            error("(ND_LVAR)存在しないサイズです。size: %d", node->ty->size);
+        printf("    push rax # value of variable\n");
+        return;
     case ND_ASSIGN:
         if (node->lhs->kind == ND_LVAR)
-        {
             gen_lval_address(node->lhs);
-        }
+        else if (node->lhs->kind == ND_GVAR)
+            gen_gvar_address(node->lhs);
         else if (node->lhs->kind == ND_DEREF)
         {
             gen_expr(node->lhs->lhs);
@@ -250,7 +295,12 @@ void gen_expr(Node *node)
 
         return;
     case ND_ADDR:
-        gen_lval_address(node->lhs);
+        if (node->lhs->kind == ND_LVAR)
+            gen_lval_address(node->lhs);
+        else if (node->lhs->kind == ND_GVAR)
+            gen_gvar_address(node->lhs);
+        else
+            error("単項&にふさわしくないノードです。codegen.c: gen_expr()");
         return;
     default:
         break;
