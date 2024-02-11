@@ -5,8 +5,6 @@
 #include <ctype.h>
 #include <string.h>
 
-extern char *user_input;
-
 typedef struct Node Node;
 typedef struct Token Token;
 typedef struct Obj Obj;
