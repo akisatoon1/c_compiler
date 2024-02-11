@@ -80,6 +80,12 @@ Token *tokenize(char *p)
             p += 3;
             continue;
         }
+        if (is_keyword(p, "char"))
+        {
+            cur = new_token(TK_TYPE, cur, p, 4);
+            p += 4;
+            continue;
+        }
         if (is_keyword(p, "sizeof"))
         {
             cur = new_token(TK_SIZEOF, cur, p, 6);

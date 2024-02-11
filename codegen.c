@@ -13,6 +13,7 @@ int Lelse = 0;
 
 char *argreg_64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 char *argreg_32[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
+char *argreg_8[] = {"dil", "sil", "dl", "cl", "r8b", "r9b"};
 
 void gen_lval_address(Node *node)
 {
@@ -69,14 +70,12 @@ void gen_function(Obj *func)
     for (int i = 0; i < nargs; i++)
     {
         printf("    pop rax\n");
-        if (sizes[nargs - i - 1] == 4)
-        {
+        if (sizes[nargs - i - 1] == 1)
+            printf("    mov BYTE PTR [rax], %s\n", argreg_8[i]);
+        else if (sizes[nargs - i - 1] == 4)
             printf("    mov DWORD PTR [rax], %s\n", argreg_32[i]);
-        }
         else if (sizes[nargs - i - 1] == 8)
-        {
             printf("    mov  QWORD PTR [rax], %s\n", argreg_64[i]);
-        }
         else
             error("(args)存在しないサイズです。size: %d", sizes[nargs - i]);
     }
@@ -191,7 +190,12 @@ void gen_expr(Node *node)
             return;
         }
 
-        if (node->ty->size == 4)
+        if (node->ty->size == 1)
+        {
+            printf("    mov al, BYTE PTR [rax]\n");
+            printf("    movsx rax, al\n");
+        }
+        else if (node->ty->size == 4)
         {
             printf("    mov eax, DWORD PTR [rax]\n");
             printf("    movsxd rax, eax\n");
@@ -214,7 +218,12 @@ void gen_expr(Node *node)
             return;
         }
 
-        if (node->ty->size == 4)
+        if (node->ty->size == 1)
+        {
+            printf("    mov al, BYTE PTR [rax]\n");
+            printf("    movsx rax, al\n");
+        }
+        else if (node->ty->size == 4)
         {
             printf("    pop rax\n");
             printf("    mov eax, DWORD PTR [rax]\n");
@@ -245,7 +254,11 @@ void gen_expr(Node *node)
         printf("    pop rdi\n");
         printf("    pop rax\n");
 
-        if (node->lhs->ty->size == 4)
+        if (node->ty->size == 1)
+        {
+            printf("    mov BYTE PTR [rax], dil # assign\n");
+        }
+        else if (node->lhs->ty->size == 4)
         {
             printf("    mov DWORD PTR [rax], edi # assign\n");
         }
@@ -279,7 +292,12 @@ void gen_expr(Node *node)
         gen_expr(node->lhs);
         printf("    pop rax\n");
 
-        if (node->lhs->ty->size == 4)
+        if (node->ty->size == 1)
+        {
+            printf("    mov al, BYTE PTR [rax]\n");
+            printf("    movsx rax, al\n");
+        }
+        else if (node->lhs->ty->size == 4)
         {
             printf("    mov eax, DWORD PTR [rax]\n");
             printf("    movsxd rax, eax\n");

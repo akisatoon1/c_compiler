@@ -16,6 +16,9 @@ assert() {
   fi
 }
 
+assert 6 'char x[4]; char main(){x[0]=0;x[1]=1;x[2]=2;x[3]=3;return x[0]+x[1]+x[2]+x[3];}'
+assert 6 'char main(){char x[4]; x[0]=0;x[1]=1;x[2]=2;x[3]=3;return x[0]+x[1]+x[2]+x[3];}'
+
 assert 0 'int x; int main() { return x; }'
 assert 7 'int x; int y; int main() { x=3; y=4; return x+y; }'
 assert 0 'int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[0]; }'

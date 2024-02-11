@@ -37,6 +37,7 @@ typedef enum
     TY_INT,
     TY_PTR,
     TY_ARRAY,
+    TY_CHAR,
 } TypeKind;
 
 struct Type
@@ -50,6 +51,7 @@ struct Type
 };
 
 extern Type *ty_int;
+extern Type *ty_char;
 
 // variable or function
 struct Obj
@@ -171,7 +173,7 @@ Obj *new_lvar(Token *tok, Type *ty);
 Obj *new_gvar(Token *tok, Type *ty);
 
 // create new type
-Type *new_type();
+Type *new_type(Type *type);
 
 // tokenize
 Token *tokenize(char *p);
