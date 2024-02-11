@@ -1,10 +1,7 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <ctype.h>
-#include <string.h>
 #include "9cc.h"
+
+// keyword
+static bool is_keyword(char *p, char *s);
 
 bool is_keyword(char *p, char *s)
 {

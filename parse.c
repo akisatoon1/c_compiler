@@ -1,14 +1,44 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <ctype.h>
-#include <string.h>
 #include "9cc.h"
 
 // variable vector
 Obj *locals;
 Obj *globals;
+
+// ebnf
+static Obj *global_variable(Type *ty, Token *tok);
+static Obj *function_def(Type *ty, Token *tok);
+static Node *stmt();
+static Node *expr();
+static Node *assign();
+static Node *equality();
+static Node *relational();
+static Node *add();
+static Node *mul();
+static Node *unary();
+static Node *primary();
+
+// create node of tree
+static Node *new_node_num(int);
+static Node *new_node(NodeKind kind, Node *lhs);
+static Node *new_node_lvar(Node *node, Token *tok);
+static Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs);
+
+// create new variable
+static Obj *new_lvar(Token *tok, Type *ty);
+static Obj *new_gvar(Token *tok, Type *ty);
+
+// find
+static Obj *find_lvar(Token *tok);
+static Obj *find_gvar(Token *tok);
+
+// align
+static int align_to(int n, int align);
+
+// (8,16)=>16, (17,16)=>32, (9,8)=>16
+int align_to(int n, int align)
+{
+    return (n - 1 + align) / align * align;
+}
 
 Node *new_node(NodeKind kind, Node *lhs)
 {

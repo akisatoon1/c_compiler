@@ -1,4 +1,9 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
 #include <stdbool.h>
+#include <ctype.h>
+#include <string.h>
 
 extern char *user_input;
 
@@ -130,47 +135,12 @@ struct Node
     Obj *var; // Used if kind == ND_VAR
 };
 
-// label id
-extern int Lend;
-extern int Lelse;
-extern int Lbegin;
-
-// 引数のレジスタ名
-extern char *argreg_64[];
-extern char *argreg_32[];
-
 // generate
-void gen(Node *node);
-void gen_lval_address(Node *node);
-void gen_gvar_address(Node *node);
-void gen_stmt(Node *node);
 void gen_function(Obj *func);
 void gen_gvar(Obj *gvar);
-void gen_expr(Node *node);
 
 // ENBF
 Obj *program();
-Obj *global_variable(Type *ty, Token *tok);
-Obj *function_def(Type *ty, Token *tok);
-Node *stmt();
-Node *expr();
-Node *assign();
-Node *equality();
-Node *relational();
-Node *add();
-Node *mul();
-Node *unary();
-Node *primary();
-
-// create node of tree
-Node *new_node_num(int);
-Node *new_node(NodeKind kind, Node *lhs);
-Node *new_node_lvar(Node *node, Token *tok);
-Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs);
-
-// create new variable
-Obj *new_lvar(Token *tok, Type *ty);
-Obj *new_gvar(Token *tok, Type *ty);
 
 // create new type
 Type *new_type(Type *type);
@@ -181,9 +151,6 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 bool is_ident1(char c);
 bool is_ident2(char c);
 bool is_alnum(char c);
-
-// キーワードsかどうか判定する。
-bool is_keyword(char *p, char *s);
 
 // use token
 bool at_eof();
@@ -197,16 +164,9 @@ bool consume_type(char *s);
 void expect_type(char *s);
 bool consume_return();
 
-// error
-void error_at(char *loc, char *fmt, ...);
-void error(char *, ...);
-
-// find
-Obj *find_lvar(Token *tok);
-Obj *find_gvar(Token *tok);
-
 // trim
 char *trim(char *s, int size_t);
 
-// align
-int align_to(int n, int align);
+// error
+void error_at(char *loc, char *fmt, ...);
+void error(char *, ...);

@@ -1,9 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <ctype.h>
-#include <string.h>
 #include "9cc.h"
 
 // 注意点
@@ -86,10 +80,4 @@ void error_at(char *loc, char *fmt, ...)
     // print the rest of token
     fprintf(stderr, "token->str rest: '%s'\n\n", token->str);
     exit(1);
-}
-
-// (8,16)=>16, (17,16)=>32, (9,8)=>16
-int align_to(int n, int align)
-{
-    return (n - 1 + align) / align * align;
 }

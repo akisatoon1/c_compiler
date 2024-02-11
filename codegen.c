@@ -1,9 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <ctype.h>
-#include <string.h>
 #include "9cc.h"
 
 // ラベルid
@@ -11,9 +5,16 @@ int Lbegin = 0;
 int Lend = 0;
 int Lelse = 0;
 
+// registers
 char *argreg_64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 char *argreg_32[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 char *argreg_8[] = {"dil", "sil", "dl", "cl", "r8b", "r9b"};
+
+// generate
+static void gen_lval_address(Node *node);
+static void gen_gvar_address(Node *node);
+static void gen_stmt(Node *node);
+static void gen_expr(Node *node);
 
 void gen_lval_address(Node *node)
 {
