@@ -43,14 +43,28 @@ Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs)
         {
             node->ty = lhs->ty;
             if (node->ty->kind == TY_ARRAY)
-                node->ty->size = 8;
+            {
+                Type *ty = calloc(1, sizeof(Type));
+                ty->kind = TY_PTR;
+                ty->size = 8;
+                ty->array_len = 0;
+                ty->ptr_to = node->ty->ptr_to;
+                node->ty = ty;
+            }
             rhs = new_node_binary(ND_MUL, rhs, new_node_num(lhs->ty->ptr_to->size));
         }
         else if (!lhs->ty->ptr_to && rhs->ty->ptr_to)
         {
             node->ty = rhs->ty;
             if (node->ty->kind == TY_ARRAY)
-                node->ty->size = 8;
+            {
+                Type *ty = calloc(1, sizeof(Type));
+                ty->kind = TY_PTR;
+                ty->size = 8;
+                ty->array_len = 0;
+                ty->ptr_to = node->ty->ptr_to;
+                node->ty = ty;
+            }
             lhs = new_node_binary(ND_MUL, lhs, new_node_num(rhs->ty->ptr_to->size));
         }
         else if (!lhs->ty->ptr_to && !rhs->ty->ptr_to)
@@ -60,10 +74,8 @@ Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs)
         else
             error("型が存在しません");
     }
-    else if (kind == ND_ASSIGN)
-        node->ty = lhs->ty;
     else
-        node->ty = ty_int;
+        node->ty = lhs->ty;
 
     node->lhs = lhs;
     node->rhs = rhs;
