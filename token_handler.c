@@ -12,11 +12,6 @@ bool is_ident2(char c)
     return is_ident1(c) || ('0' <= c && c <= '9');
 }
 
-bool is_alnum(char c)
-{
-    return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9') || (c == '_');
-}
-
 bool consume_reserved(char *op)
 {
     if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(op, token->str, token->len))
@@ -107,6 +102,15 @@ int expect_number()
     int val = token->val;
     token = token->next;
     return val;
+}
+
+Token *consume_string()
+{
+    if (token->kind != TK_STRING)
+        return NULL;
+    Token *cur_token = token;
+    token = token->next;
+    return cur_token;
 }
 
 bool at_eof()

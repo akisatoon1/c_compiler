@@ -4,6 +4,7 @@
 int Lbegin = 0;
 int Lend = 0;
 int Lelse = 0;
+int LC = 0; // string
 
 // registers
 char *argreg_64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
@@ -41,7 +42,7 @@ void gen_gvar_address(Node *node)
 
 void gen_gvar(Obj *gvar)
 {
-    printf(".data\n");
+    printf(".section .data\n");
     printf(".globl %s\n", gvar->name);
     printf("%s:\n", gvar->name);
     printf("    .zero %d\n", gvar->ty->size);
@@ -50,7 +51,7 @@ void gen_gvar(Obj *gvar)
 
 void gen_function(Obj *func)
 {
-    printf(".text\n");
+    printf(".section .text\n");
     printf(".globl %s\n", func->name);
     printf("%s:\n", func->name);
     printf("    push rbp\n");
@@ -284,6 +285,10 @@ void gen_expr(Node *node)
         {
             printf("    pop %s\n", argreg_64[i]);
         }
+
+        // 可変長引数はALに入れる
+        printf("    mov al, 0\n");
+
         // mov rax, 0
         // rspを16byte整列にalignしてない
         printf("    call %s\n", node->funcname);
@@ -320,6 +325,15 @@ void gen_expr(Node *node)
             gen_gvar_address(node->lhs);
         else
             error("単項&にふさわしくないノードです。codegen.c: gen_expr()");
+        return;
+    case ND_STRING:
+        printf(".section .rodata\n");
+        printf(".LC%d:\n", LC);
+        printf("    .string \"%s\"\n", node->str);
+        printf(".section .text\n");
+        printf("    lea rax, .LC%d[rip]\n", LC);
+        printf("    push rax # string address\n");
+        LC++;
         return;
     default:
         break;

@@ -20,6 +20,7 @@ typedef enum
     TK_TYPE,     // 型
     TK_SIZEOF,   // sizeof
     TK_RETURN,   // return
+    TK_STRING,   // string
     TK_EOF       // 入力の終わりを示すトークン
 } TokenKind;
 
@@ -100,10 +101,11 @@ typedef enum
     ND_FOR,      // for
     ND_BLOCK,    // {}
     ND_FUNCCALL, // call function
-    ND_NUM,      // Integer
+    ND_NUM,      // num literal
     ND_DEREF,    // *
     ND_ADDR,     // &
-    ND_TYPE_DEF, // int
+    ND_TYPE_DEF, // int or char(declaration)
+    ND_STRING,   // string literal
 } NodeKind;
 
 struct Node
@@ -129,8 +131,9 @@ struct Node
     char *funcname; // function name
     Node *args;     // arguments
 
-    int val;  // Used if kind == ND_NUM
-    Obj *var; // Used if kind == ND_VAR
+    int val;   // Used if kind == ND_NUM
+    Obj *var;  // Used if kind == ND_VAR
+    char *str; // Used if kind == ND_STRING
 };
 
 // generate
@@ -148,7 +151,6 @@ Token *tokenize(char *p);
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 bool is_ident1(char c);
 bool is_ident2(char c);
-bool is_alnum(char c);
 
 // use token
 bool at_eof();
@@ -161,6 +163,7 @@ bool consume_sizeof();
 bool consume_type(char *s);
 void expect_type(char *s);
 bool consume_return();
+Token *consume_string();
 
 // trim
 char *trim(char *s, int size_t);

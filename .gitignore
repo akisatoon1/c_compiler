@@ -1,7 +1,9 @@
 *~
 *.o
+link.sh
 tmp*
 a.out
 9cc
 .vscode
 *.asm
+test.c

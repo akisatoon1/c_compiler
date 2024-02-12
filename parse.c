@@ -455,22 +455,41 @@ Node *assign()
 }
 
 // equality = relational ("==" relational | "!=" relational)*
+//          | string
 Node *equality()
 {
-    Node *node = relational();
-    for (;;)
+    Token *tok = consume_string();
+    if (tok)
     {
-        if (consume_reserved("=="))
+        Node *node = calloc(1, sizeof(Node));
+        node->kind = ND_STRING;
+        node->str = trim(tok->str, tok->len);
+
+        Type *ty = calloc(1, sizeof(Type));
+        ty->kind = TY_PTR;
+        ty->ptr_to = ty_char;
+        ty->size = 8;
+        node->ty = ty;
+
+        return node;
+    }
+    else
+    {
+        Node *node = relational();
+        for (;;)
         {
-            node = new_node_binary(ND_EQ, node, relational());
-        }
-        else if (consume_reserved("!="))
-        {
-            node = new_node_binary(ND_NE, node, relational());
-        }
-        else
-        {
-            return node;
+            if (consume_reserved("=="))
+            {
+                node = new_node_binary(ND_EQ, node, relational());
+            }
+            else if (consume_reserved("!="))
+            {
+                node = new_node_binary(ND_NE, node, relational());
+            }
+            else
+            {
+                return node;
+            }
         }
     }
 }

@@ -16,6 +16,8 @@ assert() {
   fi
 }
 
+assert 1 'int main(){char *x; x = "helloworld"; return 0;}'
+
 assert 10 'char x[5]; char main(){x[0]=0;x[1]=1;x[2]=2;x[3]=3;x[4]=4;return x[0]+x[1]+x[2]+x[3]+x[4];}'
 assert 6 'char main(){char x[4]; x[0]=0;x[1]=1;x[2]=2;x[3]=3;return x[0]+x[1]+x[2]+x[3];}'
 
@@ -27,6 +29,7 @@ assert 2 'int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[2]; }'
 assert 3 'int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[3]; }'
 assert 4 'int x; int main() { return sizeof(x); }'
 assert 16 'int x[4]; int main() { return sizeof(x); }'
+assert 23 'int x; int y; int main(){x=12; y=11; return x+y;}'
 assert 46 'int x; int main(){x=34; int x; x=46; return x;}'
 assert 30 'int x; int main(){x=13; return x+17;}'
 

@@ -2,10 +2,16 @@
 
 // keyword
 static bool is_keyword(char *p, char *s);
+static bool is_alnum(char c);
 
 bool is_keyword(char *p, char *s)
 {
     return !strncmp(p, s, strlen(s)) && !is_alnum(p[strlen(s)]);
+}
+
+bool is_alnum(char c)
+{
+    return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9') || (c == '_');
 }
 
 Token *new_token(TokenKind kind, Token *cur, char *str, int len)
@@ -30,6 +36,7 @@ Token *tokenize(char *p)
             p++;
             continue;
         }
+        // 長い記号を先にトークナイズする。
         if (strncmp(p, ">=", 2) == 0 || strncmp(p, "<=", 2) == 0 || strncmp(p, "==", 2) == 0 || strncmp(p, "!=", 2) == 0)
         {
             cur = new_token(TK_RESERVED, cur, p, 2);
@@ -39,6 +46,14 @@ Token *tokenize(char *p)
         if (strchr("+-*&/()<>;={}[],", *p))
         {
             cur = new_token(TK_RESERVED, cur, p++, 1);
+            continue;
+        }
+        if (strchr("\"", *p))
+        {
+            char *q = ++p;
+            while (!strchr("\"", *p))
+                p++;
+            cur = new_token(TK_STRING, cur, q, p++ - q);
             continue;
         }
         if (is_keyword(p, "return"))
