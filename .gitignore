@@ -1,6 +1,6 @@
 *~
 *.o
-link.sh
+link*
 tmp*
 a.out
 9cc
