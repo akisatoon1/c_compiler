@@ -42,7 +42,7 @@ void gen_gvar_address(Node *node)
 
 void gen_gvar(Obj *gvar)
 {
-    printf(".section .data\n");
+    printf(".section .bss\n");
     printf(".globl %s\n", gvar->name);
     printf("%s:\n", gvar->name);
     printf("    .zero %d\n", gvar->ty->size);
