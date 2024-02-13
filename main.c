@@ -11,10 +11,16 @@
 // 実装済み
 // int 4byte, ptr 8byte
 
-// コンパイルする文字列
-char *user_input;
+// コンパイルするファイルのpath
+static char *user_input;
 
+// ファイルの中身の文字列
+static char *compiled_string;
+
+// main.c parse.c tokenize.c token_handler.c で使うグローバル変数
 Token *token;
+
+static char *read_file(char *path);
 
 int main(int argc, char **argv)
 {
@@ -25,7 +31,8 @@ int main(int argc, char **argv)
     }
 
     user_input = argv[1];
-    token = tokenize(user_input);
+    compiled_string = read_file(user_input);
+    token = tokenize(compiled_string);
 
     // function or global variable vector (main)
     Obj *prog = program();
@@ -61,8 +68,8 @@ void error_at(char *loc, char *fmt, ...)
     va_list ap;
     va_start(ap, fmt);
 
-    int pos = loc - user_input;
-    fprintf(stderr, "%s\n", user_input);
+    int pos = loc - compiled_string;
+    fprintf(stderr, "%s\n", compiled_string);
 
     // print space ' ' at fixed number times.
     for (int i = 0; i < pos; i++)
@@ -80,4 +87,31 @@ void error_at(char *loc, char *fmt, ...)
     // print the rest of token
     fprintf(stderr, "token->str rest: '%s'\n\n", token->str);
     exit(1);
+}
+
+// 指定されたファイルの内容を返す
+char *read_file(char *path)
+{
+    // ファイルを開く
+    FILE *fp = fopen(path, "r");
+    if (!fp)
+        error("cannot open %s: %s", path, strerror(errno));
+
+    // ファイルの長さを調べる
+    if (fseek(fp, 0, SEEK_END) == -1)
+        error("%s: fseek: %s", path, strerror(errno));
+    size_t size = ftell(fp);
+    if (fseek(fp, 0, SEEK_SET) == -1)
+        error("%s: fseek: %s", path, strerror(errno));
+
+    // ファイル内容を読み込む
+    char *buf = calloc(1, size + 2);
+    fread(buf, size, 1, fp);
+
+    // ファイルが必ず"\n\0"で終わっているようにする
+    if (size == 0 || buf[size - 1] != '\n')
+        buf[size++] = '\n';
+    buf[size] = '\0';
+    fclose(fp);
+    return buf;
 }

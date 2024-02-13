@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <ctype.h>
 #include <string.h>
+#include <errno.h>
 
 typedef struct Node Node;
 typedef struct Token Token;
@@ -77,9 +78,6 @@ struct Obj
     Obj *locals;
     int stack_size;
 };
-
-extern Obj *locals;
-extern Obj *globals;
 
 // NodeKind
 typedef enum

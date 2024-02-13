@@ -1,8 +1,8 @@
 #include "9cc.h"
 
 // variable vector
-Obj *locals;
-Obj *globals;
+static Obj *locals;
+static Obj *globals;
 
 // ebnf
 static Obj *global_variable(Type *ty, Token *tok);

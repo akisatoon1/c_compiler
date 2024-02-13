@@ -31,7 +31,7 @@ Token *tokenize(char *p)
     Token *cur = &head;
     while (*p)
     {
-        if (isspace(*p))
+        if (isspace(*p) || *p == '\n')
         {
             p++;
             continue;
