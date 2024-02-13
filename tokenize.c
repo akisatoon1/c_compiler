@@ -31,11 +31,33 @@ Token *tokenize(char *p)
     Token *cur = &head;
     while (*p)
     {
+        // 空白文字をスキップ
         if (isspace(*p) || *p == '\n')
         {
             p++;
             continue;
         }
+
+        // 行コメントをスキップ
+        if (!strncmp(p, "//", 2))
+        {
+            p = p + 2;
+            while (*p != '\n')
+                p++;
+            continue;
+        }
+
+        // ブロックコメントをスキップ
+        if (!strncmp(p, "/*", 2))
+        {
+            p = p + 2;
+            char *q = strstr(p + 2, "*/");
+            if (!q)
+                error_at(p, "コメントが閉じられていません。");
+            p = q + 2;
+            continue;
+        }
+
         // 長い記号を先にトークナイズする。
         if (strncmp(p, ">=", 2) == 0 || strncmp(p, "<=", 2) == 0 || strncmp(p, "==", 2) == 0 || strncmp(p, "!=", 2) == 0)
         {
