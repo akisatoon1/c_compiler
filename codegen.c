@@ -1,10 +1,13 @@
 #include "9cc.h"
 
 // ラベルid
-int Lbegin = 0;
-int Lend = 0;
-int Lelse = 0;
-int LC = 0; // string
+static int LforBegin = 0;
+static int LforEnd = 0;
+static int LwhileBegin = 0;
+static int LwhileEnd = 0;
+static int Lif = 0;
+static int Lelse = 0;
+static int LC = 0; // string
 
 // registers
 char *argreg_64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
@@ -91,6 +94,7 @@ void gen_stmt(Node *node)
     switch (node->kind)
     {
     case ND_RETURN:
+        printf("# return begin\n");
         gen_expr(node->lhs);
         printf("    pop rax # return value\n");
         printf("    mov rsp, rbp\n");
@@ -98,6 +102,7 @@ void gen_stmt(Node *node)
         printf("    ret\n");
         return;
     case ND_IF:
+        printf("# if begin\n");
         gen_expr(node->cond);
         printf("    pop rax # if condition\n");
         printf("    cmp rax, 0\n");
@@ -105,38 +110,42 @@ void gen_stmt(Node *node)
         {
             printf("    je .Lelse%d\n", Lelse);
             gen_stmt(node->then);
-            printf("    jmp .Lend%d\n", Lend);
+            printf("    jmp .Lif%d\n", Lif);
             printf(".Lelse%d:\n", Lelse);
             gen_stmt(node->_else);
             Lelse++;
         }
         else
         {
-            printf("    je .Lend%d\n", Lend);
+            printf("    je .Lif%d\n", Lif);
             gen_stmt(node->then);
         }
-        printf(".Lend%d:\n", Lend);
-        Lend++;
+        printf(".Lif%d:\n", Lif);
+        printf("# if end\n");
+        Lif++;
         return;
     case ND_WHILE:
-        printf(".Lbegin%d:\n", Lbegin);
+        printf("# while begin\n");
+        printf(".LwhileBegin%d:\n", LwhileBegin);
         gen_expr(node->cond);
         printf("    pop rax # while condition\n");
         printf("    cmp rax, 0\n");
-        printf("    je .Lend%d\n", Lend);
+        printf("    je .LwhileEnd%d\n", LwhileEnd);
         gen_stmt(node->then);
-        printf("    jmp .Lbegin%d\n", Lbegin);
-        printf(".Lend%d:\n", Lend);
-        Lend++;
-        Lbegin++;
+        printf("    jmp .LwhileBegin%d\n", LwhileBegin);
+        printf(".LwhileEnd%d:\n", LwhileEnd);
+        printf("# while end\n");
+        LwhileEnd++;
+        LwhileBegin++;
         return;
     case ND_FOR:
+        printf("# for begin\n");
         if (node->init)
         {
             gen_expr(node->init);
             printf("    pop rax\n");
         }
-        printf(".Lbegin%d:\n", Lbegin);
+        printf(".LforBegin%d:\n", LforBegin);
         if (node->cond)
         {
             gen_expr(node->cond);
@@ -147,17 +156,18 @@ void gen_stmt(Node *node)
         }
         printf("    pop rax # for condition\n");
         printf("    cmp rax, 0\n");
-        printf("    je .Lend%d\n", Lend);
+        printf("    je .LforEnd%d\n", LforEnd);
         gen_stmt(node->then);
         if (node->inc)
         {
             gen_expr(node->inc);
             printf("    pop rax\n");
         }
-        printf("    jmp .Lbegin%d\n", Lbegin);
-        printf(".Lend%d:\n", Lend);
-        Lbegin++;
-        Lend++;
+        printf("    jmp .LforBegin%d\n", LforBegin);
+        printf(".LforEnd%d:\n", LforEnd);
+        printf("# for end\n");
+        LforBegin++;
+        LforEnd++;
         return;
     case ND_TYPE_DEF:
         printf("    # type definition\n");
