@@ -10,10 +10,10 @@ $(OBJS): 9cc.h
 test: 9cc
 	./test.sh
 
-link: 9cc
-	./link.sh
+cc: 9cc
+	./cc.sh
 
 clean:
 	rm -f 9cc *.o *~ tmp*
 
-.PHONY: test clean link
+.PHONY: test clean cc
