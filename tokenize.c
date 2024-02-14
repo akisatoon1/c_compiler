@@ -31,10 +31,20 @@ Token *tokenize(char *p)
     Token *cur = &head;
     while (*p)
     {
-        // 空白文字をスキップ
+        // 空白文字と改行文字をスキップ
         if (isspace(*p) || *p == '\n')
         {
             p++;
+            continue;
+        }
+
+        // #includeの文を書かないとvscode上でエラー表示されるので、
+        // #include <stdio.h>のような文は読み込まない。
+        if (*p == '#')
+        {
+            p++;
+            while (*p != '\n')
+                p++;
             continue;
         }
 
