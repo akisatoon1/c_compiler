@@ -296,7 +296,9 @@ void gen_expr(Node *node)
             printf("    pop %s\n", argreg_64[i]);
         }
 
-        // 可変長引数はALに入れる
+        // 可変長引数を取る関数を呼ぶときは、
+        // 浮動小数点数の引数の個数をALに入れておく
+        // 今は取らないので0を入れる
         printf("    mov al, 0\n");
 
         // mov rax, 0

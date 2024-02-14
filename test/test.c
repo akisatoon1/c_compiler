@@ -6,12 +6,20 @@
 #include <string.h>
 #include <errno.h>
 
+// 何番目のテストかを表す数。最初は1
+int num;
 int assert(int expected, int actual)
 {
     if (expected != actual)
     {
-        printf("WRONG\n");
+        printf("WRONG!\n");
+        printf("expected is %d, but actual is %d\n", expected, actual);
         exit(1);
+    }
+    else
+    {
+        printf("test%d passed\n", num);
+        num = num + 1;
     }
     return 0;
 }
@@ -125,6 +133,7 @@ int f6()
 
 int main()
 {
+    num = 1;
     assert(0, 0);
     assert(42, 42);
     assert(21, 5 + 20 - 4);
@@ -171,7 +180,7 @@ int main()
     assert(4, f3());
     assert(24, f4());
     assert(10, f5());
-    assert(5, f6());
+    assert(5, f6()); // 41番目のテスト
 
     printf("OK\n");
     return 0;
