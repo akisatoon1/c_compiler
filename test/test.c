@@ -8,19 +8,18 @@
 
 // 何番目のテストかを表す数。最初は1
 int num;
+int error_num;
 int assert(int expected, int actual)
 {
     if (expected != actual)
     {
-        printf("test%d error!\n", num);
+        error_num = error_num + 1;
+        printf("\x1b[31m");
+        printf("\ntest%d error!\n", num);
+        printf("\x1b[0m");
         printf("expected is %d, but actual is %d\n", expected, actual);
-        exit(1);
     }
-    else
-    {
-        printf("test%d passed\n", num);
-        num = num + 1;
-    }
+    num = num + 1;
     return 0;
 }
 
@@ -134,6 +133,7 @@ int f6()
 int main()
 {
     num = 1;
+    error_num = 0;
     assert(0, 0);            // 1
     assert(42, 42);          // 2
     assert(21, 5 + 20 - 4);  // 3
@@ -182,6 +182,7 @@ int main()
     assert(10, f5());   // 40
     assert(5, f6());    // 41
 
-    printf("OK\n");
+    if (error_num == 0)
+        printf("OK\n");
     return 0;
 }
