@@ -12,7 +12,7 @@ int assert(int expected, int actual)
 {
     if (expected != actual)
     {
-        printf("WRONG!\n");
+        printf("test%d error!\n", num);
         printf("expected is %d, but actual is %d\n", expected, actual);
         exit(1);
     }
@@ -134,53 +134,53 @@ int f6()
 int main()
 {
     num = 1;
-    assert(0, 0);
-    assert(42, 42);
-    assert(21, 5 + 20 - 4);
-    assert(41, 12 + 34 - 5);
-    assert(47, 5 + 6 * 7);
-    assert(15, 5 * (9 - 6));
-    assert(4, (3 + 5) / 2);
-    assert(10, -10 + 20);
-    assert(10, - -10);
-    assert(10, - -+10);
+    assert(0, 0);            // 1
+    assert(42, 42);          // 2
+    assert(21, 5 + 20 - 4);  // 3
+    assert(41, 12 + 34 - 5); // 4
+    assert(47, 5 + 6 * 7);   // 5
+    assert(15, 5 * (9 - 6)); // 6
+    assert(4, (3 + 5) / 2);  // 7
+    assert(10, -10 + 20);    // 8
+    assert(10, - -10);       // 9
+    assert(10, - -+10);      // 10
 
-    assert(0, 0 == 1);
-    assert(1, 42 == 42);
-    assert(1, 0 != 1);
-    assert(0, 42 != 42);
+    assert(0, 0 == 1);   // 11
+    assert(1, 42 == 42); // 12
+    assert(1, 0 != 1);   // 13
+    assert(0, 42 != 42); // 14
 
-    assert(1, 0 < 1);
-    assert(0, 1 < 1);
-    assert(0, 2 < 1);
-    assert(1, 0 <= 1);
-    assert(1, 1 <= 1);
-    assert(0, 2 <= 1);
+    assert(1, 0 < 1);  // 15
+    assert(0, 1 < 1);  // 16
+    assert(0, 2 < 1);  // 17
+    assert(1, 0 <= 1); // 18
+    assert(1, 1 <= 1); // 19
+    assert(0, 2 <= 1); // 20
 
-    assert(1, 1 > 0);
-    assert(0, 1 > 1);
-    assert(0, 1 > 2);
-    assert(1, 1 >= 0);
-    assert(1, 1 >= 1);
-    assert(0, 1 >= 2);
+    assert(1, 1 > 0);  // 21
+    assert(0, 1 > 1);  // 22
+    assert(0, 1 > 2);  // 23
+    assert(1, 1 >= 0); // 24
+    assert(1, 1 >= 1); // 25
+    assert(0, 1 >= 2); // 26
 
-    assert(3, ret3());
-    assert(8, add2(3, 5));
-    assert(2, sub2(5, 3));
-    assert(21, add6(1, 2, 3, 4, 5, 6));
-    assert(66, add6(1, 2, add6(3, 4, 5, 6, 7, 8), 9, 10, 11));
-    assert(136, add6(1, 2, add6(3, add6(4, 5, 6, 7, 8, 9), 10, 11, 12, 13), 14, 15, 16));
+    assert(3, ret3());                                                                    // 27
+    assert(8, add2(3, 5));                                                                // 28
+    assert(2, sub2(5, 3));                                                                // 29
+    assert(21, add6(1, 2, 3, 4, 5, 6));                                                   // 30
+    assert(66, add6(1, 2, add6(3, 4, 5, 6, 7, 8), 9, 10, 11));                            // 31
+    assert(136, add6(1, 2, add6(3, add6(4, 5, 6, 7, 8, 9), 10, 11, 12, 13), 14, 15, 16)); // 32
 
-    assert(7, add2(3, 4));
-    assert(1, sub2(4, 3));
-    assert(55, fib(9));
+    assert(7, add2(3, 4)); // 33
+    assert(1, sub2(4, 3)); // 34
+    assert(55, fib(9));    // 35
 
-    assert(30, f1(20));
-    assert(10, f2());
-    assert(4, f3());
-    assert(24, f4());
-    assert(10, f5());
-    assert(5, f6()); // 41番目のテスト
+    assert(30, f1(20)); // 36
+    assert(10, f2());   // 37
+    assert(4, f3());    // 38
+    assert(24, f4());   // 39
+    assert(10, f5());   // 40
+    assert(5, f6());    // 41
 
     printf("OK\n");
     return 0;
