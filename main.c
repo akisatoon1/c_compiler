@@ -104,7 +104,7 @@ void error_at(char *loc, char *fmt, ...)
     fprintf(stderr, "\n");
 
     // print the rest of token
-    fprintf(stderr, "token->str rest: '%s'\n\n", token->str);
+    // fprintf(stderr, "token->str rest: '%s'\n\n", token->str);
     exit(1);
 }
 

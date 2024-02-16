@@ -5,6 +5,8 @@ static Obj *locals;
 static Obj *globals;
 
 // ebnf
+static Type *declspec();
+static Type *declarator(Type *type);
 static Obj *global_variable(Type *ty, Token *tok);
 static Obj *function_def(Type *ty, Token *tok);
 static Node *stmt();
@@ -42,6 +44,8 @@ int align_to(int n, int align)
 
 Node *new_node(NodeKind kind, Node *lhs)
 {
+    if (!lhs)
+        error_at(token->str, "lhs is NULL in new_node_binary");
     Node *node = calloc(1, sizeof(Node));
     node->kind = kind;
     node->lhs = lhs;
@@ -53,6 +57,10 @@ Node *new_node(NodeKind kind, Node *lhs)
 // である前提。
 Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs)
 {
+    if (!lhs)
+        error_at(token->str, "lhs is NULL in new_node_binary");
+    if (!rhs)
+        error_at(token->str, "rhs is NULL in new_node_binary");
     Node *node = calloc(1, sizeof(Node));
     node->kind = kind;
 
@@ -124,6 +132,10 @@ Node *new_node_num(int val)
 
 Node *new_node_var(Node *node, Token *tok)
 {
+    if (!node)
+        error_at(token->str, "node is NULL in new_node_var");
+    if (!tok)
+        error_at(token->str, "tok is NULL in new_node_var");
     Obj *lvar = find_lvar(tok);
     if (lvar)
     {
@@ -149,6 +161,8 @@ Node *new_node_var(Node *node, Token *tok)
 
 Obj *new_lvar(Token *tok, Type *ty)
 {
+    if (!tok)
+        error_at(token->str, "tok is NULL in new_lvar");
     Obj *lvar = calloc(1, sizeof(Obj));
 
     lvar->next = locals;
@@ -162,6 +176,10 @@ Obj *new_lvar(Token *tok, Type *ty)
 
 Obj *new_gvar(Token *tok, Type *ty)
 {
+    if (!tok)
+        error_at(token->str, "tok is NULL in new_gvar");
+    if (!ty)
+        error_at(token->str, "ty is NULL in new_gvar");
     Obj *gvar = calloc(1, sizeof(Obj));
 
     gvar->name = trim(tok->str, tok->len);
@@ -183,7 +201,27 @@ Type *declspec()
         return NULL;
 }
 
-// program = (declspec "*"* ident function-def | declspec "*"* ident global-variable)*
+// declarator = "*"* ident
+Type *declarator(Type *type)
+{
+    if (!type)
+        error_at(token->str, "type is NULL in declarator");
+    while (consume_reserved("*"))
+    {
+        Type *type_ptr = calloc(1, sizeof(Type));
+        type_ptr->kind = TY_PTR;
+        type_ptr->size = 8;
+        type_ptr->ptr_to = type;
+        type = type_ptr;
+    }
+
+    type->name = consume_ident();
+    if (!type->name)
+        error_at(token->str, "識別子がありません。in declarator");
+    return type;
+}
+
+// program = (declspec declarator ( "(" function-def | global-variable ) )*
 Obj *program()
 {
     globals = calloc(1, sizeof(Obj));
@@ -193,20 +231,19 @@ Obj *program()
         Type *base_type = declspec();
         if (!base_type)
             error_at(token->str, "存在しない型です。parse.c:153");
-        Type *ty = new_type(base_type);
+        Type *ty = declarator(base_type);
 
-        Token *tok = consume_ident();
-        if (!strncmp(token->str, "(", 1))
+        if (consume_reserved("("))
         {
             locals = calloc(1, sizeof(Obj));
-            Obj *func = function_def(ty, tok);
+            Obj *func = function_def(ty, ty->name);
             func->locals = locals;
             func->next = globals;
             globals = func;
         }
         else
         {
-            Obj *global_var = global_variable(ty, tok);
+            Obj *global_var = global_variable(ty, ty->name);
             global_var->next = globals;
             globals = global_var;
         }
@@ -241,14 +278,13 @@ Obj *global_variable(Type *ty, Token *tok_ident)
     return gvar;
 }
 
-// function-def = "(" ")" "{" stmt* "}"
-//          | "(" declspec  "*"* ident ("," declspec  "*"* ident)* ")" "{" stmt* "}"
+// function-def = ")" "{" stmt* "}"
+//          | declspec  declarator ("," declspec  declarator)* ")" "{" stmt* "}"
 Obj *function_def(Type *return_ty, Token *tok_ident)
 {
     Obj *func = calloc(1, sizeof(Obj));
     func->is_local = false;
     func->is_function = true;
-
     func->ty = return_ty;
 
     if (!tok_ident)
@@ -258,38 +294,29 @@ Obj *function_def(Type *return_ty, Token *tok_ident)
 
     func->name = trim(tok_ident->str, tok_ident->len);
 
-    expect_reserved("(");
     while (!consume_reserved(")"))
     {
         // トークンを読み込む
         Type *base_type = declspec();
         if (!base_type)
             error_at(token->str, "存在しない型です。parse.c:225");
-        Type *type = new_type(base_type);
+        Type *ty = declarator(base_type);
 
-        Token *tok_param = consume_ident();
-        if (!tok_param)
-        {
-            error("引数には変数を指定してください。（関数定義時）");
-        }
-
-        Obj *lvar = find_lvar(tok_param);
+        Obj *lvar = find_lvar(ty->name);
         if (lvar)
         {
             error("既に使われているローカル変数です。");
         }
         else
         {
-            lvar = new_lvar(tok_param, type);
+            lvar = new_lvar(ty->name, ty);
             locals = lvar;
         }
 
         consume_reserved(",");
     }
 
-    // params vector
-    func->params = locals;
-
+    func->params = locals; // params vector
     func->body = stmt();
     func->stack_size = align_to(locals->offset, 16);
 
@@ -297,7 +324,7 @@ Obj *function_def(Type *return_ty, Token *tok_ident)
 }
 
 // stmt = expr ";"
-//      | declspec "*"* ident ("[" num "]")? ";"
+//      | declspec declarator ("[" num "]")? ";"
 //      | "return" expr ";"
 //      | "if" "(" expr ")" stmt ("else" stmt)?
 //      | "while" "(" expr ")" stmt
@@ -311,41 +338,34 @@ Node *stmt()
     {
         node = calloc(1, sizeof(Node));
         node->kind = ND_TYPE_DEF;
-        Type *type = new_type(base_type);
+        Type *ty = declarator(base_type);
 
-        Token *tok = consume_ident();
-        if (tok)
+        if (consume_reserved("["))
         {
-            if (consume_reserved("["))
-            {
-                Type *type_array = calloc(1, sizeof(Type));
-                type_array->kind = TY_ARRAY;
-                type_array->array_len = expect_number();
-                type_array->size = (type->size) * (type_array->array_len);
-                type_array->ptr_to = type;
+            Type *type_array = calloc(1, sizeof(Type));
+            type_array->kind = TY_ARRAY;
+            type_array->name = ty->name;
+            type_array->array_len = expect_number();
+            type_array->size = (ty->size) * (type_array->array_len);
+            type_array->ptr_to = ty;
 
-                type = type_array;
+            ty = type_array;
 
-                expect_reserved("]");
-            }
+            expect_reserved("]");
+        }
 
-            Obj *lvar = find_lvar(tok);
-            if (lvar)
-            {
-                error_at(tok->str, "'%s'は既に使われている変数または配列名です。", trim(tok->str, tok->len));
-            }
-            else
-            {
-                lvar = new_lvar(tok, type);
-
-                node->var = lvar;
-
-                locals = lvar;
-            }
+        Obj *lvar = find_lvar(ty->name);
+        if (lvar)
+        {
+            error_at(ty->name->str, "'%s'は既に使われている変数または配列名です。", trim(ty->name->str, ty->name->len));
         }
         else
         {
-            error_at(token->str, "変数または配列名ではありません。");
+            lvar = new_lvar(ty->name, ty);
+
+            node->var = lvar;
+
+            locals = lvar;
         }
         expect_reserved(";");
     }

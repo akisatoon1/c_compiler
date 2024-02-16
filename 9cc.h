@@ -53,6 +53,9 @@ struct Type
 
     // Array
     int array_len;
+
+    // declaration
+    Token *name;
 };
 
 extern Type *ty_int;
