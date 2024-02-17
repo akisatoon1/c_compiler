@@ -19,6 +19,9 @@ static void gen_stmt(Node *node);
 static void gen_expr(Node *node);
 static void gen_addr(Node *node);
 
+// value from ptr
+static void gen_value(Node *node, char *reg_ptr);
+
 void gen_gvar(Obj *gvar)
 {
     printf(".section .bss\n");
@@ -53,6 +56,28 @@ static void gen_addr(Node *node)
     default:
         error_at(token->str, "not address node in codegen.c gen_addr");
     }
+}
+
+void gen_value(Node *node, char *reg_ptr)
+{
+    if (node->ty->size == 1)
+    {
+        printf("    mov al, BYTE PTR [%s]\n", reg_ptr);
+        printf("    movsx rax, al\n");
+    }
+    else if (node->ty->size == 4)
+    {
+        printf("    mov eax, DWORD PTR [%s]\n", reg_ptr);
+        printf("    movsxd rax, eax\n");
+    }
+    else if (node->ty->size == 8)
+    {
+        printf("    mov rax, QWORD PTR [%s]\n", reg_ptr);
+    }
+    else
+        error("存在しないサイズです。size: %d in codegen.c gen_value", node->lhs->ty->size);
+    printf("    push rax\n");
+    return;
 }
 
 void gen_function(Obj *func)
@@ -204,53 +229,18 @@ void gen_expr(Node *node)
             printf("    push rax\n");
             return;
         }
-
-        if (node->ty->size == 1)
-        {
-            printf("    mov al, BYTE PTR [rax]\n");
-            printf("    movsx rax, al\n");
-        }
-        else if (node->ty->size == 4)
-        {
-            printf("    mov eax, DWORD PTR [rax]\n");
-            printf("    movsxd rax, eax\n");
-        }
-        else if (node->ty->size == 8)
-        {
-            printf("    mov rax, QWORD PTR [rax]\n");
-        }
-        else
-            error("(ND_LVAR)存在しないサイズです。size: %d", node->ty->size);
-        printf("    push rax # value of variable\n");
-
+        gen_value(node, "rax");
         return;
     case ND_GVAR:
         gen_addr(node);
+        printf("    pop rax # address of variable\n");
         if (node->ty->kind == TY_ARRAY)
         {
-            // printf("    pop rax\n");
-            // printf("    push rax\n");
+            printf("    push rax\n");
             return;
         }
 
-        if (node->ty->size == 1)
-        {
-            printf("    mov al, BYTE PTR [rax]\n");
-            printf("    movsx rax, al\n");
-        }
-        else if (node->ty->size == 4)
-        {
-            printf("    pop rax\n");
-            printf("    mov eax, DWORD PTR [rax]\n");
-            printf("    movsxd rax, eax\n");
-        }
-        else if (node->ty->size == 8)
-        {
-            printf("    mov rax, QWORD PTR [rax]\n");
-        }
-        else
-            error("(ND_LVAR)存在しないサイズです。size: %d", node->ty->size);
-        printf("    push rax # value of variable\n");
+        gen_value(node, "rax");
         return;
     case ND_ASSIGN:
         if (node->lhs->kind == ND_LVAR || node->lhs->kind == ND_GVAR || node->lhs->kind == ND_MEMBER)
@@ -311,25 +301,7 @@ void gen_expr(Node *node)
         gen_addr(node);
         printf("    pop rax\n");
 
-        if (node->ty->size == 1)
-        {
-            printf("    mov al, BYTE PTR [rax]\n");
-            printf("    movsx rax, al\n");
-        }
-        else if (node->lhs->ty->size == 4)
-        {
-            printf("    mov eax, DWORD PTR [rax]\n");
-            printf("    movsxd rax, eax\n");
-        }
-        else if (node->lhs->ty->size == 8)
-        {
-            printf("    mov rax, QWORD PTR [rax]\n");
-        }
-        else
-            error("(ND_DEREF)存在しないサイズです。size: %d", node->lhs->ty->size);
-
-        printf("    push rax\n");
-
+        gen_value(node, "rax");
         return;
     case ND_ADDR:
         if (node->lhs->kind == ND_LVAR || node->lhs->kind == ND_GVAR || node->lhs->kind == ND_MEMBER)
@@ -350,23 +322,7 @@ void gen_expr(Node *node)
         gen_addr(node);
         printf("    pop rax\n");
 
-        if (node->ty->size == 1)
-        {
-            printf("    mov al, BYTE PTR [rax]\n");
-            printf("    movsx rax, al\n");
-        }
-        else if (node->lhs->ty->size == 4)
-        {
-            printf("    mov eax, DWORD PTR [rax]\n");
-            printf("    movsxd rax, eax\n");
-        }
-        else if (node->lhs->ty->size == 8)
-        {
-            printf("    mov rax, QWORD PTR [rax]\n");
-        }
-        else
-            error("(ND_DEREF)存在しないサイズです。size: %d", node->lhs->ty->size);
-        printf("push rax\n");
+        gen_value(node, "rax");
         return;
     default:
         break;
