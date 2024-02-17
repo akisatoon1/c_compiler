@@ -4,6 +4,10 @@
 static Obj *locals;
 static Obj *globals;
 
+// func
+Function *funcs;
+static void new_func(char *name, Type *ty);
+
 // ebnf
 static Type *declspec();
 static Type *declarator(Type *type);
@@ -39,6 +43,7 @@ static Obj *new_gvar(Token *tok, Type *ty);
 static Obj *find_lvar(Token *tok);
 static Obj *find_gvar(Token *tok);
 static Member *find_member(Token *tok, Member *members);
+Type *find_func(char *name);
 
 // create member
 static Member *create_new_member(Type *ty, Member *mems);
@@ -50,6 +55,16 @@ static int align_to(int n, int align);
 int align_to(int n, int align)
 {
     return (n - 1 + align) / align * align;
+}
+
+void new_func(char *name, Type *ty)
+{
+    Function *func = calloc(1, sizeof(Function));
+    func->name = name;
+    func->ty = ty;
+    func->next = funcs;
+    funcs = func;
+    return;
 }
 
 Node *new_node(NodeKind kind, Node *lhs)
@@ -238,6 +253,11 @@ Type *declaration(Type *base_ty)
 Obj *program()
 {
     globals = calloc(1, sizeof(Obj));
+    funcs = calloc(1, sizeof(Function));
+
+    // header file内のfuncはここでfuncsに追加する。
+    new_func("printf", ty_void);
+
     while (!at_eof())
     {
         // トークンを読み込む
@@ -280,6 +300,8 @@ Obj *global_variable(Type *ty, Token *tok_ident)
 //          | declspec  declarator ("," declspec  declarator)* ")" "{" stmt* "}"
 Obj *function_def(Type *return_ty, Token *tok_ident)
 {
+    new_func(trim(tok_ident->str, tok_ident->len), return_ty);
+
     Obj *func = calloc(1, sizeof(Obj));
     func->is_local = false;
     func->is_function = true;
@@ -733,6 +755,8 @@ Node *primary()
             Node *cur = &head;
             node->kind = ND_FUNCCALL;
             node->funcname = trim(tok->str, tok->len);
+            find_func(node->funcname);
+
             while (!consume_reserved(")"))
             {
                 cur = cur->next = expr();
@@ -750,6 +774,16 @@ Node *primary()
     }
 
     return new_node_num(expect_number());
+}
+
+Type *find_func(char *name)
+{
+    for (Function *func = funcs; func->name; func = func->next)
+    {
+        if (!strcmp(func->name, name))
+            return func->ty;
+    }
+    error_at(token->str, "funcが見つかりません。in parse.c find_func");
 }
 
 Obj *find_lvar(Token *tok)

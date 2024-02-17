@@ -11,6 +11,7 @@ typedef struct Token Token;
 typedef struct Obj Obj;
 typedef struct Type Type;
 typedef struct Member Member;
+typedef struct Function Function;
 
 // TokenKind
 typedef enum
@@ -42,6 +43,7 @@ typedef enum
     TY_ARRAY,
     TY_CHAR,
     TY_STRUCT,
+    TY_VOID,
 } TypeKind;
 
 struct Type
@@ -62,6 +64,19 @@ struct Type
 
 extern Type *ty_int;
 extern Type *ty_char;
+extern Type *ty_void;
+
+// funcのnameとreturn_typeを保存。
+// funcが定義済みかどうかをチェックするため。
+// funcのreturn_typeを取得するため。
+struct Function
+{
+    char *name;
+    Type *ty;
+    Function *next;
+};
+
+extern Function *funcs;
 
 // variable or function
 struct Obj
@@ -185,3 +200,6 @@ Type *array_of(Type *ptr_to, int len);
 void add_type(Node *node);
 Type *copy_type(Type *ty);
 bool is_integer(Type *ty);
+
+// func
+Type *find_func(char *name);

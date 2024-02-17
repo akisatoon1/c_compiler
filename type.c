@@ -2,6 +2,7 @@
 
 Type *ty_int = &(Type){TY_INT, NULL, 4};
 Type *ty_char = &(Type){TY_CHAR, NULL, 1};
+Type *ty_void = &(Type){TY_VOID};
 
 bool is_integer(Type *ty)
 {
@@ -62,7 +63,6 @@ void add_type(Node *node)
     case ND_LT:
     case ND_LE:
     case ND_NUM:
-    case ND_FUNCCALL: // All func's return type is int.
         node->ty = ty_int;
         return;
 
@@ -91,6 +91,10 @@ void add_type(Node *node)
 
     case ND_STRING:
         node->ty = pointer_to(ty_char);
+        return;
+
+    case ND_FUNCCALL:
+        node->ty = find_func(node->funcname);
         return;
 
     default:
