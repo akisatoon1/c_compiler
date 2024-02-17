@@ -28,6 +28,8 @@ static Node *new_node_num(int);
 static Node *new_node(NodeKind kind, Node *lhs);
 static Node *new_node_var(Node *node, Token *tok);
 static Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs);
+static Node *new_node_add(Node *lhs, Node *rhs);
+static Node *new_node_sub(Node *lhs, Node *rhs);
 
 // create new variable
 static Obj *new_lvar(Token *tok, Type *ty);
@@ -69,36 +71,13 @@ Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs)
         error_at(token->str, "lhs is NULL in new_node_binary");
     if (!rhs)
         error_at(token->str, "rhs is NULL in new_node_binary");
+
     Node *node = calloc(1, sizeof(Node));
     node->kind = kind;
     node->lhs = lhs;
     node->rhs = rhs;
     add_type(node);
-
-    if (node->lhs->ty->ptr_to && node->rhs->ty->ptr_to)
-    {
-        // ポインタ同士の演算, 引き算のみ
-        if (node->kind == ND_ADD)
-            error_at(token->str, "ポインタ同士の演算は引き算のみです。");
-
-        return new_node_binary(ND_DIV, node, new_node_num(node->lhs->ty->ptr_to->size));
-    }
-    else if (node->lhs->ty->ptr_to && !node->rhs->ty->ptr_to)
-    {
-        node->rhs = new_node_binary(ND_MUL, rhs, new_node_num(node->lhs->ty->ptr_to->size));
-        return node;
-    }
-    else if (!node->lhs->ty->ptr_to && node->rhs->ty->ptr_to)
-    {
-        node->lhs = new_node_binary(ND_MUL, lhs, new_node_num(node->rhs->ty->ptr_to->size));
-        return node;
-    }
-    else if (!node->lhs->ty->ptr_to && !node->rhs->ty->ptr_to)
-    {
-        return node;
-    }
-    else
-        error("型が存在しません in type.c add_type()");
+    return node;
 }
 
 Node *new_node_num(int val)
@@ -121,6 +100,8 @@ Node *new_node_var(Node *node, Token *tok)
     {
         node->kind = ND_LVAR;
         node->var = lvar;
+        add_type(node);
+        return node;
     }
     else
     {
@@ -130,12 +111,12 @@ Node *new_node_var(Node *node, Token *tok)
         {
             node->kind = ND_GVAR;
             node->var = gvar;
+            add_type(node);
+            return node;
         }
         else
             error_at(tok->str, "'%s'は宣言されていない変数名です。in parse.c new_node_var()", trim(tok->str, tok->len));
     }
-    add_type(node);
-    return node;
 }
 
 Obj *new_lvar(Token *tok, Type *ty)
@@ -548,6 +529,89 @@ Node *relational()
     }
 }
 
+Node *new_node_add(Node *lhs, Node *rhs)
+{
+    if (!lhs)
+        error_at(token->str, "lhs is null in parse.c new_node_add()");
+    if (!rhs)
+        error_at(token->str, "rhs is null in parse.c new_node_add()");
+
+    add_type(lhs);
+    add_type(rhs);
+
+    // num + num
+    if (lhs->ty->kind == TY_INT && rhs->ty->kind == TY_INT)
+        return new_node_binary(ND_ADD, lhs, rhs);
+
+    // num + ptr
+    if (lhs->ty->kind == TY_INT && rhs->ty->ptr_to)
+    {
+        Node *tmp = lhs;
+        lhs = rhs;
+        rhs = tmp;
+    }
+
+    // ptr + num
+    if (lhs->ty->ptr_to && rhs->ty->kind == TY_INT)
+    {
+        if (lhs->ty->kind == TY_ARRAY)
+        {
+            lhs->ty = copy_type(lhs->ty);
+            lhs->ty->size = 8;
+        }
+        rhs = new_node_binary(ND_MUL, rhs, new_node_num(lhs->ty->ptr_to->size));
+        return new_node_binary(ND_ADD, lhs, rhs);
+    }
+
+    error_at(token->str, "cannot caluculate ptr in parse.c new_add_node()");
+}
+
+Node *new_node_sub(Node *lhs, Node *rhs)
+{
+    if (!lhs)
+        error_at(token->str, "lhs is null in parse.c new_sub_node()");
+    if (!rhs)
+        error_at(token->str, "rhs is null in parse.c new_sub_node()");
+
+    add_type(lhs);
+    add_type(rhs);
+
+    // num - num
+    if (lhs->ty->kind == TY_INT && rhs->ty->kind == TY_INT)
+    {
+        return new_node_binary(ND_SUB, lhs, rhs);
+    }
+
+    // ptr - num
+    if (lhs->ty->ptr_to && rhs->ty->kind == TY_INT)
+    {
+        if (lhs->ty->kind == TY_ARRAY)
+        {
+            lhs->ty = copy_type(lhs->ty);
+            lhs->ty->size = 8;
+        }
+        rhs = new_node_binary(ND_MUL, rhs, new_node_num(lhs->ty->ptr_to->size));
+        return new_node_binary(ND_SUB, lhs, rhs);
+    }
+
+    // ptr - ptr
+    if (lhs->ty->ptr_to && rhs->ty->ptr_to)
+    {
+        if (lhs->ty->kind == TY_ARRAY)
+        {
+            lhs->ty = copy_type(lhs->ty);
+            lhs->ty->size = 8;
+        }
+        if (rhs->ty->kind == TY_ARRAY)
+        {
+            rhs->ty = copy_type(rhs->ty);
+            rhs->ty->size = 8;
+        }
+        lhs = new_node_binary(ND_SUB, lhs, rhs);
+        return new_node_binary(ND_DIV, lhs, new_node_num(rhs->ty->ptr_to->size));
+    }
+}
+
 // add = mul ("+" mul | "-" mul)*
 Node *add()
 {
@@ -556,11 +620,11 @@ Node *add()
     {
         if (consume_reserved("+"))
         {
-            node = new_node_binary(ND_ADD, node, mul());
+            node = new_node_add(node, mul());
         }
         else if (consume_reserved("-"))
         {
-            node = new_node_binary(ND_SUB, node, mul());
+            node = new_node_sub(node, mul());
         }
         else
         {
@@ -643,13 +707,13 @@ Node *postfix()
 
     if (consume_reserved("["))
     {
-        node = new_node_binary(ND_ADD, node, expr());
+        node = new_node_add(node, expr());
         expect_reserved("]");
 
-        Node *node_top = new_node(ND_DEREF, node);
+        node = new_node(ND_DEREF, node);
 
         add_type(node);
-        return node_top;
+        return node;
     }
     else if (consume_reserved("."))
     {

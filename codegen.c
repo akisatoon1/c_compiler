@@ -19,7 +19,7 @@ static void gen_stmt(Node *node);
 static void gen_expr(Node *node);
 static void gen_addr(Node *node);
 
-// value from ptr
+// value from ptr(addr is already in register)
 static void gen_value(Node *node, char *reg_ptr);
 
 void gen_gvar(Obj *gvar)
@@ -226,7 +226,7 @@ void gen_expr(Node *node)
 
         if (node->ty->kind == TY_ARRAY)
         {
-            printf("    push rax\n");
+            printf("    push rax # value of variable\n");
             return;
         }
         gen_value(node, "rax");
@@ -236,7 +236,7 @@ void gen_expr(Node *node)
         printf("    pop rax # address of variable\n");
         if (node->ty->kind == TY_ARRAY)
         {
-            printf("    push rax\n");
+            printf("    push rax # value of variable\n");
             return;
         }
 

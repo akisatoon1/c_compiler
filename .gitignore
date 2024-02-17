@@ -7,3 +7,4 @@ a.out
 .vscode
 *.asm
 cc.c
+debug.sh

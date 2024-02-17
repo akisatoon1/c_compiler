@@ -3,8 +3,6 @@
 Type *ty_int = &(Type){TY_INT, NULL, 4};
 Type *ty_char = &(Type){TY_CHAR, NULL, 1};
 
-static Type *copy_type(Type *ty);
-
 Type *copy_type(Type *ty)
 {
     Type *copied = calloc(1, sizeof(Type));
@@ -44,43 +42,6 @@ void add_type(Node *node)
     {
     case ND_ADD:
     case ND_SUB:
-        if (node->lhs->ty->ptr_to && node->rhs->ty->ptr_to)
-        {
-            node->ty = ty_int;
-            return;
-        }
-        else if (node->lhs->ty->ptr_to && !node->rhs->ty->ptr_to)
-        {
-            if (node->lhs->ty->kind == TY_ARRAY)
-            {
-                node->lhs->ty = copy_type(node->lhs->ty);
-                node->lhs->ty->size = 8;
-                node->lhs->ty->array_len = 0;
-            }
-
-            node->ty = node->lhs->ty;
-            return;
-        }
-        else if (!node->lhs->ty->ptr_to && node->rhs->ty->ptr_to)
-        {
-            if (node->rhs->ty->kind == TY_ARRAY)
-            {
-                node->rhs->ty = copy_type(node->rhs->ty);
-                node->rhs->ty->size = 8;
-                node->rhs->ty->array_len = 0;
-            }
-
-            node->ty = node->rhs->ty;
-            return;
-        }
-        else if (!node->lhs->ty->ptr_to && !node->rhs->ty->ptr_to)
-        {
-            node->ty = node->lhs->ty;
-            return;
-        }
-        else
-            error("型が存在しません in type.c add_type()");
-
     case ND_MUL:
     case ND_DIV:
         node->ty = node->lhs->ty;
