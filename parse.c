@@ -9,6 +9,7 @@ static Type *declspec();
 static Type *declarator(Type *type);
 static Type *declaration(Type *ty);
 static Type *struct_def();
+static Member *struct_members();
 static Obj *global_variable(Type *ty, Token *tok);
 static Obj *function_def(Type *ty, Token *tok);
 static Node *stmt();
@@ -35,6 +36,7 @@ static Obj *new_gvar(Token *tok, Type *ty);
 // find
 static Obj *find_lvar(Token *tok);
 static Obj *find_gvar(Token *tok);
+static Member *find_member(Token *tok, Member *members);
 
 // align
 static int align_to(int n, int align);
@@ -208,14 +210,24 @@ Type *declspec()
         return NULL;
 }
 
-// struct_def = "{" (declspec declarator declaration ";")* }"
+// struct_def = "{" struct_members
 Type *struct_def()
 {
     Type *ty = calloc(1, sizeof(Type));
     ty->kind = TY_STRUCT;
-    Member *members = calloc(1, sizeof(Member));
 
     expect_reserved("{");
+    Member *members = struct_members();
+
+    ty->size = members->offset + members->size;
+    ty->members = members;
+    return ty;
+}
+
+// struct_members = ( declspec declarator declaration ";" )* "}"
+Member *struct_members()
+{
+    Member *members = calloc(1, sizeof(Member));
     while (!consume_reserved("}"))
     {
         Member *member = calloc(1, sizeof(Member));
@@ -237,10 +249,7 @@ Type *struct_def()
 
         expect_reserved(";");
     }
-
-    ty->size = members->offset + members->size;
-    ty->members = members;
-    return ty;
+    return members;
 }
 
 // declarator = "*"* ident
@@ -666,7 +675,7 @@ Node *unary()
     return postfix();
 }
 
-// postfix = primary ( "[" expr "]" )?
+// postfix = primary ( "[" expr "]" | "." ident )?
 Node *postfix()
 {
     Node *node = primary();
@@ -680,6 +689,17 @@ Node *postfix()
         node_top->ty = node->lhs->ty->ptr_to;
 
         return node_top;
+    }
+    else if (consume_reserved("."))
+    {
+        Token *tok = consume_ident();
+        Member *member = find_member(tok, node->ty->members);
+        if (!member)
+            error_at(token->str, "member is not found. in parse.c postfix");
+        node = new_node(ND_MEMBER, node);
+        node->member = member;
+        node->ty = member->ty;
+        return node;
     }
     else
         return node;

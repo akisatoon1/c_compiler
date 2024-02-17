@@ -109,7 +109,7 @@ typedef enum
     ND_ADDR,     // &
     ND_TYPE_DEF, // int or char(declaration)
     ND_STRING,   // string literal
-    ND_STRUCT,   // struct
+    ND_MEMBER,   // member
 } NodeKind;
 
 struct Node

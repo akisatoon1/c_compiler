@@ -130,6 +130,44 @@ int f6()
     return a;
 }
 
+// 3
+int f7()
+{
+    struct
+    {
+        char a;
+        int b;
+        char c;
+    } x;
+    x.a = 1;
+    x.b = 2;
+    x.c = 3;
+    return x.c;
+}
+
+// 40
+int f8()
+{
+    struct
+    {
+        int a[3];
+        int b[2];
+    } x[2];
+    return sizeof(x);
+}
+
+// 6
+int f9()
+{
+    struct
+    {
+        char a;
+        int b;
+        char c;
+    } x;
+    return sizeof(x);
+}
+
 int main()
 {
     num = 1;
@@ -181,6 +219,10 @@ int main()
     assert(24, f4());   // 39
     assert(10, f5());   // 40
     assert(5, f6());    // 41
+
+    assert(3, f7());  // 42
+    assert(40, f8()); // 43
+    assert(6, f9());  // 44
 
     if (error_num == 0)
         printf("OK\n");
