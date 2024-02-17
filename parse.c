@@ -19,6 +19,7 @@ static Node *relational();
 static Node *add();
 static Node *mul();
 static Node *unary();
+static Node *postfix();
 static Node *primary();
 
 // create node of tree
@@ -620,7 +621,7 @@ Node *mul()
 }
 
 // unary = ("+" | "-" | "*" | "&" | "sizeof") unary
-//       | primary
+//       | postfix
 Node *unary()
 {
     if (consume_reserved("+"))
@@ -662,13 +663,31 @@ Node *unary()
 
         return new_node_num(node->lhs->ty->size);
     }
-    return primary();
+    return postfix();
+}
+
+// postfix = primary ( "[" expr "]" )?
+Node *postfix()
+{
+    Node *node = primary();
+
+    if (consume_reserved("["))
+    {
+        node = new_node_binary(ND_ADD, node, expr());
+        expect_reserved("]");
+
+        Node *node_top = new_node(ND_DEREF, node);
+        node_top->ty = node->lhs->ty->ptr_to;
+
+        return node_top;
+    }
+    else
+        return node;
 }
 
 // primary = "(" expr ")"
 //         | ident ("(" ")")?
 //         | ident "(" expr ("," expr)* ")"
-//         | ident "[" expr "]"
 //         | num
 Node *primary()
 {
@@ -698,21 +717,9 @@ Node *primary()
             node->args = head.next;
             return node;
         }
-
         else
         {
-            node = new_node_var(node, tok);
-            if (consume_reserved("["))
-            {
-                node = new_node_binary(ND_ADD, node, expr());
-                expect_reserved("]");
-
-                Node *node_top = new_node(ND_DEREF, node);
-                node_top->ty = node->lhs->ty->ptr_to;
-
-                return node_top;
-            }
-            return node;
+            return new_node_var(node, tok);
         }
     }
 
