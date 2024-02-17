@@ -540,11 +540,11 @@ Node *new_node_add(Node *lhs, Node *rhs)
     add_type(rhs);
 
     // num + num
-    if (lhs->ty->kind == TY_INT && rhs->ty->kind == TY_INT)
+    if (is_integer(lhs->ty) && is_integer(rhs->ty))
         return new_node_binary(ND_ADD, lhs, rhs);
 
     // num + ptr
-    if (lhs->ty->kind == TY_INT && rhs->ty->ptr_to)
+    if (is_integer(lhs->ty) && rhs->ty->ptr_to)
     {
         Node *tmp = lhs;
         lhs = rhs;
@@ -552,7 +552,7 @@ Node *new_node_add(Node *lhs, Node *rhs)
     }
 
     // ptr + num
-    if (lhs->ty->ptr_to && rhs->ty->kind == TY_INT)
+    if (lhs->ty->ptr_to && is_integer(rhs->ty))
     {
         if (lhs->ty->kind == TY_ARRAY)
         {
@@ -577,13 +577,13 @@ Node *new_node_sub(Node *lhs, Node *rhs)
     add_type(rhs);
 
     // num - num
-    if (lhs->ty->kind == TY_INT && rhs->ty->kind == TY_INT)
+    if (is_integer(lhs->ty) && is_integer(rhs->ty))
     {
         return new_node_binary(ND_SUB, lhs, rhs);
     }
 
     // ptr - num
-    if (lhs->ty->ptr_to && rhs->ty->kind == TY_INT)
+    if (lhs->ty->ptr_to && is_integer(rhs->ty))
     {
         if (lhs->ty->kind == TY_ARRAY)
         {
@@ -683,19 +683,14 @@ Node *unary()
         if (node->lhs->ty->kind == TY_ARRAY)
             return new_node_var(node, token);
 
-        Type *ty = pointer_to(node->lhs->ty);
         node->kind = ND_ADDR;
-
         add_type(node);
         return node;
     }
     if (consume_keyword("sizeof"))
     {
-        Node *node = calloc(1, sizeof(Node));
-        node->lhs = unary();
-        add_type(node->lhs);
-
-        return new_node_num(node->lhs->ty->size);
+        Node *node = unary();
+        return new_node_num(node->ty->size);
     }
     return postfix();
 }

@@ -168,6 +168,18 @@ int f9()
     return sizeof(x);
 }
 
+// 17
+int f10()
+{
+    char x[5];
+    x[0] = 2;
+    x[1] = 6;
+    x[2] = 3;
+    x[3] = 7;
+    x[4] = 4;
+    return x[1] - x[2] + (x[3] * x[4]) / x[0];
+}
+
 int main()
 {
     num = 1;
@@ -223,6 +235,8 @@ int main()
     assert(3, f7());  // 42
     assert(40, f8()); // 43
     assert(6, f9());  // 44
+
+    assert(17, f10()); // 45
 
     if (error_num == 0)
         printf("OK\n");

@@ -184,3 +184,4 @@ Type *pointer_to(Type *ptr_to);
 Type *array_of(Type *ptr_to, int len);
 void add_type(Node *node);
 Type *copy_type(Type *ty);
+bool is_integer(Type *ty);
