@@ -7,6 +7,7 @@ static Obj *globals;
 // ebnf
 static Type *declspec();
 static Type *declarator(Type *type);
+static Type *declaration(Type *ty);
 static Obj *global_variable(Type *ty, Token *tok);
 static Obj *function_def(Type *ty, Token *tok);
 static Node *stmt();
@@ -221,6 +222,27 @@ Type *declarator(Type *type)
     return type;
 }
 
+// declaration = ("[" num "]")?
+Type *declaration(Type *ty)
+{
+    if (!ty)
+        error_at(token->str, "ty is null in declaration");
+
+    if (consume_reserved("["))
+    {
+        Type *type_array = calloc(1, sizeof(Type));
+        type_array->kind = TY_ARRAY;
+        type_array->name = ty->name;
+        type_array->array_len = expect_number();
+        type_array->size = (ty->size) * (type_array->array_len);
+        type_array->ptr_to = ty;
+        ty = type_array;
+
+        expect_reserved("]");
+    }
+    return ty;
+}
+
 // program = (declspec declarator ( "(" function-def | global-variable ) )*
 Obj *program()
 {
@@ -253,26 +275,11 @@ Obj *program()
     return globals;
 }
 
-// globale-variable = ("[" num "]")? ";"
+// globale-variable = declaration ";"
 Obj *global_variable(Type *ty, Token *tok_ident)
 {
     Obj *gvar;
-
-    if (!tok_ident)
-        error_at(token->str, "シンボルが見つかりません。");
-
-    if (consume_reserved("["))
-    {
-        Type *type_array = calloc(1, sizeof(Type));
-        type_array->kind = TY_ARRAY;
-        type_array->array_len = expect_number();
-        type_array->size = (ty->size) * (type_array->array_len);
-        type_array->ptr_to = ty;
-
-        ty = type_array;
-
-        expect_reserved("]");
-    }
+    ty = declaration(ty);
     gvar = new_gvar(tok_ident, ty);
     expect_reserved(";");
     return gvar;
@@ -324,7 +331,7 @@ Obj *function_def(Type *return_ty, Token *tok_ident)
 }
 
 // stmt = expr ";"
-//      | declspec declarator ("[" num "]")? ";"
+//      | declspec declarator declaration ";"
 //      | "return" expr ";"
 //      | "if" "(" expr ")" stmt ("else" stmt)?
 //      | "while" "(" expr ")" stmt
@@ -339,20 +346,7 @@ Node *stmt()
         node = calloc(1, sizeof(Node));
         node->kind = ND_TYPE_DEF;
         Type *ty = declarator(base_type);
-
-        if (consume_reserved("["))
-        {
-            Type *type_array = calloc(1, sizeof(Type));
-            type_array->kind = TY_ARRAY;
-            type_array->name = ty->name;
-            type_array->array_len = expect_number();
-            type_array->size = (ty->size) * (type_array->array_len);
-            type_array->ptr_to = ty;
-
-            ty = type_array;
-
-            expect_reserved("]");
-        }
+        ty = declaration(ty);
 
         Obj *lvar = find_lvar(ty->name);
         if (lvar)
