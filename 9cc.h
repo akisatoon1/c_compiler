@@ -136,7 +136,7 @@ struct Node
     Node *args;     // arguments
 
     int val;        // Used if kind == ND_NUM
-    Obj *var;       // Used if kind == ND_VAR
+    Obj *var;       // Used if kind == ND_LVAR/ND_GVAR
     char *str;      // Used if kind == ND_STRING
     Member *member; // Used if kind == ND_STRUCT
 };
@@ -156,9 +156,6 @@ void gen_gvar(Obj *gvar);
 
 // ENBF
 Obj *program();
-
-// create new type
-Type *new_type(Type *type);
 
 // tokenize
 Token *tokenize(char *p);
@@ -181,3 +178,8 @@ char *trim(char *s, int size_t);
 // error
 void error_at(char *loc, char *fmt, ...);
 void error(char *, ...);
+
+// type
+Type *pointer_to(Type *ptr_to);
+Type *array_of(Type *ptr_to, int len);
+void add_type(Node *node);

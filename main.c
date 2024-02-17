@@ -9,7 +9,7 @@
 // a[expr]は認めるが、num[expr]は認められない(本来は認められるが使わないので認められないことにした)。
 
 // 実装済み
-// int 4byte, ptr 8byte
+// int 4byte, ptr 8byte, char 1byte
 
 // コンパイルするファイルのpath
 static char *user_input;

@@ -38,6 +38,9 @@ static Obj *find_lvar(Token *tok);
 static Obj *find_gvar(Token *tok);
 static Member *find_member(Token *tok, Member *members);
 
+// create member
+static Member *create_new_member(Type *ty, Member *mems);
+
 // align
 static int align_to(int n, int align);
 
@@ -230,21 +233,17 @@ Member *struct_members()
     Member *members = calloc(1, sizeof(Member));
     while (!consume_reserved("}"))
     {
-        Member *member = calloc(1, sizeof(Member));
-
         Type *base_ty = declspec();
         if (!base_ty)
             error_at(token->str, "base_ty is NULL in struct_def");
+
         Type *member_ty = declarator(base_ty);
         if (!member_ty)
             error_at(token->str, "member_ty is NULL in struct_def");
+
         member_ty = declaration(member_ty);
 
-        member->name = trim(member_ty->name->str, member_ty->name->len);
-        member->ty = member_ty;
-        member->offset = members->offset + members->size;
-        member->size = member->ty->size;
-        member->next = members;
+        Member *member = create_new_member(member_ty, members);
         members = member;
 
         expect_reserved(";");
@@ -253,44 +252,34 @@ Member *struct_members()
 }
 
 // declarator = "*"* ident
-Type *declarator(Type *type)
+Type *declarator(Type *ty)
 {
-    if (!type)
+    if (!ty)
         error_at(token->str, "type is NULL in declarator");
     while (consume_reserved("*"))
     {
-        Type *type_ptr = calloc(1, sizeof(Type));
-        type_ptr->kind = TY_PTR;
-        type_ptr->size = 8;
-        type_ptr->ptr_to = type;
-        type = type_ptr;
+        ty = pointer_to(ty);
     }
 
-    type->name = consume_ident();
-    if (!type->name)
+    ty->name = consume_ident();
+    if (!ty->name)
         error_at(token->str, "識別子がありません。in declarator");
-    return type;
+    return ty;
 }
 
 // declaration = ("[" num "]")?
-Type *declaration(Type *ty)
+Type *declaration(Type *base_ty)
 {
-    if (!ty)
-        error_at(token->str, "ty is null in declaration");
+    if (!base_ty)
+        error_at(token->str, "base_ty is null in declaration");
 
     if (consume_reserved("["))
     {
-        Type *type_array = calloc(1, sizeof(Type));
-        type_array->kind = TY_ARRAY;
-        type_array->name = ty->name;
-        type_array->array_len = expect_number();
-        type_array->size = (ty->size) * (type_array->array_len);
-        type_array->ptr_to = ty;
-        ty = type_array;
-
+        int array_len = expect_number();
         expect_reserved("]");
+        return array_of(base_ty, array_len);
     }
-    return ty;
+    return base_ty;
 }
 
 // program = (declspec declarator ( "(" function-def | global-variable ) )*
@@ -529,10 +518,7 @@ Node *equality()
         node->kind = ND_STRING;
         node->str = trim(tok->str, tok->len);
 
-        Type *ty = calloc(1, sizeof(Type));
-        ty->kind = TY_PTR;
-        ty->ptr_to = ty_char;
-        ty->size = 8;
+        Type *ty = pointer_to(ty_char);
         node->ty = ty;
 
         return node;
@@ -650,17 +636,14 @@ Node *unary()
     }
     if (consume_reserved("&"))
     {
-        Type *ty = calloc(1, sizeof(Type));
         Node *node = calloc(1, sizeof(Node));
-
         node->lhs = unary();
+
         if (node->lhs->ty->kind == TY_ARRAY)
             return new_node_var(node, token);
 
+        Type *ty = pointer_to(node->lhs->ty);
         node->kind = ND_ADDR;
-        ty->kind = TY_PTR;
-        ty->size = 8;
-        ty->ptr_to = node->lhs->ty;
         node->ty = ty;
 
         return node;
@@ -776,6 +759,17 @@ Member *find_member(Token *tok, Member *members)
             return member;
     }
     return NULL;
+}
+
+Member *create_new_member(Type *ty, Member *mems)
+{
+    Member *mem = calloc(1, sizeof(Member));
+    mem->name = trim(ty->name->str, ty->name->len);
+    mem->ty = ty;
+    mem->size = ty->size;
+    mem->offset = mems->offset + mems->size;
+    mem->next = mems;
+    return mem;
 }
 
 char *trim(char *s, int size_t)
