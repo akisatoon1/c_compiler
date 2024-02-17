@@ -3,6 +3,15 @@
 Type *ty_int = &(Type){TY_INT, NULL, 4};
 Type *ty_char = &(Type){TY_CHAR, NULL, 1};
 
+static Type *copy_type(Type *ty);
+
+Type *copy_type(Type *ty)
+{
+    Type *copied = calloc(1, sizeof(Type));
+    *copied = *ty;
+    return copied;
+}
+
 Type *pointer_to(Type *ptr_to)
 {
     Type *ty = calloc(1, sizeof(Type));
@@ -42,17 +51,31 @@ void add_type(Node *node)
         }
         else if (node->lhs->ty->ptr_to && !node->rhs->ty->ptr_to)
         {
+            if (node->lhs->ty->kind == TY_ARRAY)
+            {
+                node->lhs->ty = copy_type(node->lhs->ty);
+                node->lhs->ty->size = 8;
+                node->lhs->ty->array_len = 0;
+            }
+
             node->ty = node->lhs->ty;
             return;
         }
         else if (!node->lhs->ty->ptr_to && node->rhs->ty->ptr_to)
         {
+            if (node->rhs->ty->kind == TY_ARRAY)
+            {
+                node->rhs->ty = copy_type(node->rhs->ty);
+                node->rhs->ty->size = 8;
+                node->rhs->ty->array_len = 0;
+            }
+
             node->ty = node->rhs->ty;
             return;
         }
         else if (!node->lhs->ty->ptr_to && !node->rhs->ty->ptr_to)
         {
-            node->ty = ty_int;
+            node->ty = node->lhs->ty;
             return;
         }
         else
@@ -100,6 +123,7 @@ void add_type(Node *node)
         return;
 
     default:
-        error_at(token->str, "%d is illegal NodeKind in type.c add_type()", node->kind);
+        error_at(token->str, "%d is not expected NodeKind in type.c add_type()");
+        return;
     }
 }

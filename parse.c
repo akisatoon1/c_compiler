@@ -71,70 +71,42 @@ Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs)
         error_at(token->str, "rhs is NULL in new_node_binary");
     Node *node = calloc(1, sizeof(Node));
     node->kind = kind;
-
-    if (kind == ND_ADD || kind == ND_SUB)
-    {
-        if (lhs->ty->ptr_to && rhs->ty->ptr_to)
-        {
-            // ポインタ同士の演算, 引き算のみ
-            if (kind != ND_SUB)
-                error("ポインタ同士の演算は引き算のみです。");
-            node->ty = ty_int;
-            node->lhs = lhs;
-            node->rhs = rhs;
-
-            return new_node_binary(ND_DIV, node, new_node_num(lhs->ty->ptr_to->size));
-        }
-        else if (lhs->ty->ptr_to && !rhs->ty->ptr_to)
-        {
-            node->ty = lhs->ty;
-            if (node->ty->kind == TY_ARRAY)
-            {
-                Type *ty = calloc(1, sizeof(Type));
-                ty->kind = TY_PTR;
-                ty->size = 8;
-                ty->array_len = 0;
-                ty->ptr_to = node->ty->ptr_to;
-                node->ty = ty;
-            }
-            rhs = new_node_binary(ND_MUL, rhs, new_node_num(lhs->ty->ptr_to->size));
-        }
-        else if (!lhs->ty->ptr_to && rhs->ty->ptr_to)
-        {
-            node->ty = rhs->ty;
-            if (node->ty->kind == TY_ARRAY)
-            {
-                Type *ty = calloc(1, sizeof(Type));
-                ty->kind = TY_PTR;
-                ty->size = 8;
-                ty->array_len = 0;
-                ty->ptr_to = node->ty->ptr_to;
-                node->ty = ty;
-            }
-            lhs = new_node_binary(ND_MUL, lhs, new_node_num(rhs->ty->ptr_to->size));
-        }
-        else if (!lhs->ty->ptr_to && !rhs->ty->ptr_to)
-        {
-            node->ty = ty_int;
-        }
-        else
-            error("型が存在しません");
-    }
-    else
-        node->ty = lhs->ty;
-
     node->lhs = lhs;
     node->rhs = rhs;
+    add_type(node);
 
-    return node;
+    if (node->lhs->ty->ptr_to && node->rhs->ty->ptr_to)
+    {
+        // ポインタ同士の演算, 引き算のみ
+        if (node->kind == ND_ADD)
+            error_at(token->str, "ポインタ同士の演算は引き算のみです。");
+
+        return new_node_binary(ND_DIV, node, new_node_num(node->lhs->ty->ptr_to->size));
+    }
+    else if (node->lhs->ty->ptr_to && !node->rhs->ty->ptr_to)
+    {
+        node->rhs = new_node_binary(ND_MUL, rhs, new_node_num(node->lhs->ty->ptr_to->size));
+        return node;
+    }
+    else if (!node->lhs->ty->ptr_to && node->rhs->ty->ptr_to)
+    {
+        node->lhs = new_node_binary(ND_MUL, lhs, new_node_num(node->rhs->ty->ptr_to->size));
+        return node;
+    }
+    else if (!node->lhs->ty->ptr_to && !node->rhs->ty->ptr_to)
+    {
+        return node;
+    }
+    else
+        error("型が存在しません in type.c add_type()");
 }
 
 Node *new_node_num(int val)
 {
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_NUM;
-    node->ty = ty_int;
     node->val = val;
+    add_type(node);
     return node;
 }
 
@@ -149,7 +121,6 @@ Node *new_node_var(Node *node, Token *tok)
     {
         node->kind = ND_LVAR;
         node->var = lvar;
-        node->ty = lvar->ty;
     }
     else
     {
@@ -159,11 +130,11 @@ Node *new_node_var(Node *node, Token *tok)
         {
             node->kind = ND_GVAR;
             node->var = gvar;
-            node->ty = gvar->ty;
         }
         else
             error_at(tok->str, "'%s'は宣言されていない変数名です。in parse.c new_node_var()", trim(tok->str, tok->len));
     }
+    add_type(node);
     return node;
 }
 
@@ -504,6 +475,7 @@ Node *assign()
     {
         node = new_node_binary(ND_ASSIGN, node, assign());
     }
+    add_type(node);
     return node;
 }
 
@@ -521,6 +493,7 @@ Node *equality()
         Type *ty = pointer_to(ty_char);
         node->ty = ty;
 
+        add_type(node);
         return node;
     }
     else
@@ -538,6 +511,7 @@ Node *equality()
             }
             else
             {
+                add_type(node);
                 return node;
             }
         }
@@ -568,6 +542,7 @@ Node *relational()
         }
         else
         {
+            add_type(node);
             return node;
         }
     }
@@ -589,6 +564,7 @@ Node *add()
         }
         else
         {
+            add_type(node);
             return node;
         }
     }
@@ -610,6 +586,7 @@ Node *mul()
         }
         else
         {
+            add_type(node);
             return node;
         }
     }
@@ -630,8 +607,8 @@ Node *unary()
     if (consume_reserved("*"))
     {
         Node *node = new_node(ND_DEREF, unary());
-        node->ty = node->lhs->ty->ptr_to;
 
+        add_type(node);
         return node;
     }
     if (consume_reserved("&"))
@@ -644,14 +621,15 @@ Node *unary()
 
         Type *ty = pointer_to(node->lhs->ty);
         node->kind = ND_ADDR;
-        node->ty = ty;
 
+        add_type(node);
         return node;
     }
     if (consume_keyword("sizeof"))
     {
         Node *node = calloc(1, sizeof(Node));
         node->lhs = unary();
+        add_type(node->lhs);
 
         return new_node_num(node->lhs->ty->size);
     }
@@ -669,8 +647,8 @@ Node *postfix()
         expect_reserved("]");
 
         Node *node_top = new_node(ND_DEREF, node);
-        node_top->ty = node->lhs->ty->ptr_to;
 
+        add_type(node);
         return node_top;
     }
     else if (consume_reserved("."))
@@ -681,11 +659,15 @@ Node *postfix()
             error_at(token->str, "member is not found. in parse.c postfix");
         node = new_node(ND_MEMBER, node);
         node->member = member;
-        node->ty = member->ty;
+
+        add_type(node);
         return node;
     }
     else
+    {
+        add_type(node);
         return node;
+    }
 }
 
 // primary = "(" expr ")"
@@ -698,6 +680,8 @@ Node *primary()
     {
         Node *node = expr();
         expect_reserved(")");
+
+        add_type(node);
         return node;
     }
     Token *tok = consume_ident();
@@ -709,8 +693,6 @@ Node *primary()
             Node head = {};
             Node *cur = &head;
             node->kind = ND_FUNCCALL;
-            // will
-            node->ty = ty_int;
             node->funcname = trim(tok->str, tok->len);
             while (!consume_reserved(")"))
             {
@@ -718,6 +700,8 @@ Node *primary()
                 consume_reserved(",");
             }
             node->args = head.next;
+
+            add_type(node);
             return node;
         }
         else
