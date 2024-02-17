@@ -1,7 +1,7 @@
 #include "9cc.h"
 
 // keyword
-char *keywords[8] = {"return", "if", "else", "while", "for", "int", "char", "sizeof"};
+char *keywords[] = {"return", "if", "else", "while", "for", "int", "char", "sizeof", "struct"};
 
 static bool is_keyword(char *p, char *s);
 static bool is_alnum(char c);
@@ -19,7 +19,8 @@ bool is_alnum(char c)
 
 char *return_keyword(char *p)
 {
-    for (int i = 0; i < 8; i++)
+    int num = sizeof(keywords) / 8;
+    for (int i = 0; i < num; i++)
     {
         if (is_keyword(p, keywords[i]))
             return keywords[i];
@@ -88,7 +89,7 @@ Token *tokenize(char *p)
             p += 2;
             continue;
         }
-        if (strchr("+-*&/()<>;={}[],", *p))
+        if (strchr("+-*&/()<>;={}[],.", *p))
         {
             cur = new_token(TK_RESERVED, cur, p++, 1);
             continue;

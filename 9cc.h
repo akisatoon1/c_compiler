@@ -10,6 +10,7 @@ typedef struct Node Node;
 typedef struct Token Token;
 typedef struct Obj Obj;
 typedef struct Type Type;
+typedef struct Member Member;
 
 // TokenKind
 typedef enum
@@ -40,6 +41,7 @@ typedef enum
     TY_PTR,
     TY_ARRAY,
     TY_CHAR,
+    TY_STRUCT,
 } TypeKind;
 
 struct Type
@@ -53,6 +55,9 @@ struct Type
 
     // declaration
     Token *name;
+
+    // struct
+    Member *members;
 };
 
 extern Type *ty_int;
@@ -104,6 +109,7 @@ typedef enum
     ND_ADDR,     // &
     ND_TYPE_DEF, // int or char(declaration)
     ND_STRING,   // string literal
+    ND_STRUCT,   // struct
 } NodeKind;
 
 struct Node
@@ -129,9 +135,19 @@ struct Node
     char *funcname; // function name
     Node *args;     // arguments
 
-    int val;   // Used if kind == ND_NUM
-    Obj *var;  // Used if kind == ND_VAR
-    char *str; // Used if kind == ND_STRING
+    int val;        // Used if kind == ND_NUM
+    Obj *var;       // Used if kind == ND_VAR
+    char *str;      // Used if kind == ND_STRING
+    Member *member; // Used if kind == ND_STRUCT
+};
+
+struct Member
+{
+    char *name;
+    int offset;
+    int size;
+    Type *ty;
+    Member *next;
 };
 
 // generate

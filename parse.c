@@ -8,6 +8,7 @@ static Obj *globals;
 static Type *declspec();
 static Type *declarator(Type *type);
 static Type *declaration(Type *ty);
+static Type *struct_def();
 static Obj *global_variable(Type *ty, Token *tok);
 static Obj *function_def(Type *ty, Token *tok);
 static Node *stmt();
@@ -23,7 +24,7 @@ static Node *primary();
 // create node of tree
 static Node *new_node_num(int);
 static Node *new_node(NodeKind kind, Node *lhs);
-static Node *new_node_lvar(Node *node, Token *tok);
+static Node *new_node_var(Node *node, Token *tok);
 static Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs);
 
 // create new variable
@@ -155,7 +156,7 @@ Node *new_node_var(Node *node, Token *tok)
             node->ty = gvar->ty;
         }
         else
-            error_at(tok->str, "'%s'は宣言されていない変数名です。", trim(tok->str, tok->len));
+            error_at(tok->str, "'%s'は宣言されていない変数名です。in parse.c new_node_var()", trim(tok->str, tok->len));
     }
     return node;
 }
@@ -191,15 +192,54 @@ Obj *new_gvar(Token *tok, Type *ty)
     return gvar;
 }
 
-// declspec = "int" | "char"
+// declspec = "int"
+//          | "char"
+//          | "struct" struct_def
 Type *declspec()
 {
     if (consume_keyword("int"))
         return ty_int;
     else if (consume_keyword("char"))
         return ty_char;
+    else if (consume_keyword("struct"))
+        return struct_def();
     else
         return NULL;
+}
+
+// struct_def = "{" (declspec declarator declaration ";")* }"
+Type *struct_def()
+{
+    Type *ty = calloc(1, sizeof(Type));
+    ty->kind = TY_STRUCT;
+    Member *members = calloc(1, sizeof(Member));
+
+    expect_reserved("{");
+    while (!consume_reserved("}"))
+    {
+        Member *member = calloc(1, sizeof(Member));
+
+        Type *base_ty = declspec();
+        if (!base_ty)
+            error_at(token->str, "base_ty is NULL in struct_def");
+        Type *member_ty = declarator(base_ty);
+        if (!member_ty)
+            error_at(token->str, "member_ty is NULL in struct_def");
+        member_ty = declaration(member_ty);
+
+        member->name = trim(member_ty->name->str, member_ty->name->len);
+        member->ty = member_ty;
+        member->offset = members->offset + members->size;
+        member->size = member->ty->size;
+        member->next = members;
+        members = member;
+
+        expect_reserved(";");
+    }
+
+    ty->size = members->offset + members->size;
+    ty->members = members;
+    return ty;
 }
 
 // declarator = "*"* ident
@@ -656,7 +696,9 @@ Node *primary()
                 consume_reserved(",");
             }
             node->args = head.next;
+            return node;
         }
+
         else
         {
             node = new_node_var(node, tok);
@@ -670,8 +712,8 @@ Node *primary()
 
                 return node_top;
             }
+            return node;
         }
-        return node;
     }
 
     return new_node_num(expect_number());
@@ -695,6 +737,16 @@ Obj *find_gvar(Token *tok)
             continue;
         if (!strcmp(var->name, trim(tok->str, tok->len)))
             return var;
+    }
+    return NULL;
+}
+
+Member *find_member(Token *tok, Member *members)
+{
+    for (Member *member = members; member->name; member = member->next)
+    {
+        if (!strcmp(member->name, trim(tok->str, tok->len)))
+            return member;
     }
     return NULL;
 }
