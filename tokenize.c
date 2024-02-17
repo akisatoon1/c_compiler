@@ -1,8 +1,11 @@
 #include "9cc.h"
 
 // keyword
+char *keywords[8] = {"return", "if", "else", "while", "for", "int", "char", "sizeof"};
+
 static bool is_keyword(char *p, char *s);
 static bool is_alnum(char c);
+static char *return_keyword(char *p);
 
 bool is_keyword(char *p, char *s)
 {
@@ -12,6 +15,16 @@ bool is_keyword(char *p, char *s)
 bool is_alnum(char c)
 {
     return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9') || (c == '_');
+}
+
+char *return_keyword(char *p)
+{
+    for (int i = 0; i < 8; i++)
+    {
+        if (is_keyword(p, keywords[i]))
+            return keywords[i];
+    }
+    return NULL;
 }
 
 Token *new_token(TokenKind kind, Token *cur, char *str, int len)
@@ -88,54 +101,16 @@ Token *tokenize(char *p)
             cur = new_token(TK_STRING, cur, q, p++ - q);
             continue;
         }
-        if (is_keyword(p, "return"))
+
+        char *keyword = return_keyword(p);
+        if (keyword)
         {
-            cur = new_token(TK_RETURN, cur, p, 6);
-            p += 6;
+            int len = strlen(keyword);
+            cur = new_token(TK_KEYWORD, cur, p, len);
+            p += len;
             continue;
         }
-        if (is_keyword(p, "if"))
-        {
-            cur = new_token(TK_CONTROLS, cur, p, 2);
-            p += 2;
-            continue;
-        }
-        if (is_keyword(p, "else"))
-        {
-            cur = new_token(TK_CONTROLS, cur, p, 4);
-            p += 4;
-            continue;
-        }
-        if (is_keyword(p, "while"))
-        {
-            cur = new_token(TK_CONTROLS, cur, p, 5);
-            p += 5;
-            continue;
-        }
-        if (is_keyword(p, "for"))
-        {
-            cur = new_token(TK_CONTROLS, cur, p, 3);
-            p += 3;
-            continue;
-        }
-        if (is_keyword(p, "int"))
-        {
-            cur = new_token(TK_TYPE, cur, p, 3);
-            p += 3;
-            continue;
-        }
-        if (is_keyword(p, "char"))
-        {
-            cur = new_token(TK_TYPE, cur, p, 4);
-            p += 4;
-            continue;
-        }
-        if (is_keyword(p, "sizeof"))
-        {
-            cur = new_token(TK_SIZEOF, cur, p, 6);
-            p += 6;
-            continue;
-        }
+
         if (is_ident1(*p))
         {
             char *q = p;

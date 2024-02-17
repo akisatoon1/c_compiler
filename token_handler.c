@@ -12,6 +12,16 @@ bool is_ident2(char c)
     return is_ident1(c) || ('0' <= c && c <= '9');
 }
 
+bool consume_keyword(char *op)
+{
+    if (token->kind != TK_KEYWORD || strlen(op) != token->len || memcmp(op, token->str, token->len))
+    {
+        return false;
+    }
+    token = token->next;
+    return true;
+}
+
 bool consume_reserved(char *op)
 {
     if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(op, token->str, token->len))
@@ -31,56 +41,6 @@ Token *consume_ident()
     Token *cur_token = token;
     token = token->next;
     return cur_token;
-}
-
-bool consume_controls(char *s)
-{
-    if (token->kind != TK_CONTROLS || strlen(s) != token->len || memcmp(s, token->str, token->len))
-    {
-        return false;
-    }
-    token = token->next;
-    return true;
-}
-
-bool consume_sizeof()
-{
-    if (token->kind != TK_SIZEOF || strlen("sizeof") != token->len || memcmp("sizeof", token->str, token->len))
-    {
-        return false;
-    }
-    token = token->next;
-    return true;
-}
-
-bool consume_type(char *s)
-{
-    if (token->kind != TK_TYPE || strlen(s) != token->len || memcmp(s, token->str, token->len))
-    {
-        return false;
-    }
-    token = token->next;
-    return true;
-}
-
-void expect_type(char *s)
-{
-    if (token->kind != TK_TYPE || strlen(s) != token->len || memcmp(s, token->str, token->len))
-    {
-        error_at(token->str, "型宣言をしてください。");
-    }
-    token = token->next;
-    return;
-}
-
-bool consume_return()
-{
-    if (token->kind != TK_RETURN || strncmp(token->str, "return", 6))
-    {
-        return false;
-    }
-    token = token->next;
-    return true;
 }
 
 void expect_reserved(char *op)

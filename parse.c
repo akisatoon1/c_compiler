@@ -194,9 +194,9 @@ Obj *new_gvar(Token *tok, Type *ty)
 // declspec = "int" | "char"
 Type *declspec()
 {
-    if (consume_type("int"))
+    if (consume_keyword("int"))
         return ty_int;
-    else if (consume_type("char"))
+    else if (consume_keyword("char"))
         return ty_char;
     else
         return NULL;
@@ -252,7 +252,7 @@ Obj *program()
         // トークンを読み込む
         Type *base_type = declspec();
         if (!base_type)
-            error_at(token->str, "存在しない型です。parse.c:153");
+            error_at(token->str, "存在しない型です。in parse.c program()");
         Type *ty = declarator(base_type);
 
         if (consume_reserved("("))
@@ -363,7 +363,7 @@ Node *stmt()
         }
         expect_reserved(";");
     }
-    else if (consume_return())
+    else if (consume_keyword("return"))
     {
         node = new_node(ND_RETURN, expr());
         expect_reserved(";");
@@ -383,7 +383,7 @@ Node *stmt()
         node->kind = ND_BLOCK;
         node->body = head.next;
     }
-    else if (consume_controls("if"))
+    else if (consume_keyword("if"))
     {
         expect_reserved("(");
         node = calloc(1, sizeof(Node));
@@ -391,7 +391,7 @@ Node *stmt()
         node->cond = expr();
         expect_reserved(")");
         node->then = stmt();
-        if (consume_controls("else"))
+        if (consume_keyword("else"))
         {
             node->_else = stmt();
         }
@@ -400,7 +400,7 @@ Node *stmt()
             node->_else = NULL;
         }
     }
-    else if (consume_controls("while"))
+    else if (consume_keyword("while"))
     {
         expect_reserved("(");
         node = calloc(1, sizeof(Node));
@@ -409,7 +409,7 @@ Node *stmt()
         expect_reserved(")");
         node->then = stmt();
     }
-    else if (consume_controls("for"))
+    else if (consume_keyword("for"))
     {
         expect_reserved("(");
         node = calloc(1, sizeof(Node));
@@ -615,7 +615,7 @@ Node *unary()
 
         return node;
     }
-    if (consume_sizeof())
+    if (consume_keyword("sizeof"))
     {
         Node *node = calloc(1, sizeof(Node));
         node->lhs = unary();
