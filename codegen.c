@@ -76,7 +76,7 @@ void gen_value(Node *node, char *reg_ptr)
     }
     else
         error("存在しないサイズです。size: %d in codegen.c gen_value", node->lhs->ty->size);
-    printf("    push rax\n");
+    printf("    push rax # value of var\n");
     return;
 }
 
@@ -226,17 +226,19 @@ void gen_expr(Node *node)
 
         if (node->ty->kind == TY_ARRAY)
         {
-            printf("    push rax # value of variable\n");
+            printf("    push rax # value of array var\n");
             return;
         }
+
         gen_value(node, "rax");
         return;
     case ND_GVAR:
         gen_addr(node);
-        printf("    pop rax # address of variable\n");
+        printf("    pop rax # address of var\n");
+
         if (node->ty->kind == TY_ARRAY)
         {
-            printf("    push rax # value of variable\n");
+            printf("    push rax # value of array var\n");
             return;
         }
 

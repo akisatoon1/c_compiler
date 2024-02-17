@@ -49,6 +49,11 @@ void add_type(Node *node)
     case ND_SUB:
     case ND_MUL:
     case ND_DIV:
+        if (node->lhs->ty->kind == TY_ARRAY)
+        {
+            node->ty = pointer_to(node->lhs->ty->ptr_to);
+            return;
+        }
         node->ty = node->lhs->ty;
         return;
 

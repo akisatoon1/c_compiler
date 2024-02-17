@@ -554,11 +554,6 @@ Node *new_node_add(Node *lhs, Node *rhs)
     // ptr + num
     if (lhs->ty->ptr_to && is_integer(rhs->ty))
     {
-        if (lhs->ty->kind == TY_ARRAY)
-        {
-            lhs->ty = copy_type(lhs->ty);
-            lhs->ty->size = 8;
-        }
         rhs = new_node_binary(ND_MUL, rhs, new_node_num(lhs->ty->ptr_to->size));
         return new_node_binary(ND_ADD, lhs, rhs);
     }
@@ -585,11 +580,6 @@ Node *new_node_sub(Node *lhs, Node *rhs)
     // ptr - num
     if (lhs->ty->ptr_to && is_integer(rhs->ty))
     {
-        if (lhs->ty->kind == TY_ARRAY)
-        {
-            lhs->ty = copy_type(lhs->ty);
-            lhs->ty->size = 8;
-        }
         rhs = new_node_binary(ND_MUL, rhs, new_node_num(lhs->ty->ptr_to->size));
         return new_node_binary(ND_SUB, lhs, rhs);
     }
@@ -597,16 +587,6 @@ Node *new_node_sub(Node *lhs, Node *rhs)
     // ptr - ptr
     if (lhs->ty->ptr_to && rhs->ty->ptr_to)
     {
-        if (lhs->ty->kind == TY_ARRAY)
-        {
-            lhs->ty = copy_type(lhs->ty);
-            lhs->ty->size = 8;
-        }
-        if (rhs->ty->kind == TY_ARRAY)
-        {
-            rhs->ty = copy_type(rhs->ty);
-            rhs->ty->size = 8;
-        }
         lhs = new_node_binary(ND_SUB, lhs, rhs);
         return new_node_binary(ND_DIV, lhs, new_node_num(rhs->ty->ptr_to->size));
     }
