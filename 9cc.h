@@ -203,3 +203,6 @@ bool is_integer(Type *ty);
 
 // func
 Type *find_func(char *name);
+
+// tree
+void display_tree(FILE *fp, Node *node, int space);

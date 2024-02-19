@@ -8,3 +8,4 @@ a.out
 *.asm
 cc.c
 debug.sh
+tree.txt

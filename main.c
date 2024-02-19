@@ -37,6 +37,9 @@ int main(int argc, char **argv)
     // function or global variable vector (main)
     Obj *prog = program();
 
+    // tree
+    FILE *fp = fopen("tree.txt", "w");
+
     printf(".intel_syntax noprefix\n");
 
     while (prog->name)
@@ -44,12 +47,16 @@ int main(int argc, char **argv)
         if (prog->is_local)
             error("ローカル変数ではありません。");
         if (prog->is_function)
+        {
+            display_tree(fp, prog->body, 0);
             gen_function(prog);
+        }
         else
             gen_gvar(prog);
         prog = prog->next;
     }
 
+    fclose(fp);
     return 0;
 }
 
