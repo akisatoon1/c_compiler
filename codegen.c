@@ -19,8 +19,9 @@ static void gen_stmt(Node *node);
 static void gen_expr(Node *node);
 static void gen_addr(Node *node);
 
-// value from ptr(addr is already in register)
-static void gen_value(Node *node, char *reg_ptr);
+// load value of variable from the variable address
+// (address is already in register)
+static void load(Node *node, char *reg_ptr);
 
 void gen_gvar(Obj *gvar)
 {
@@ -58,8 +59,10 @@ static void gen_addr(Node *node)
     }
 }
 
-void gen_value(Node *node, char *reg_ptr)
+void load(Node *node, char *reg_ptr)
 {
+    if (node->ty->kind == TY_ARRAY)
+        return;
     if (node->ty->size == 1)
     {
         printf("    mov al, BYTE PTR [%s]\n", reg_ptr);
@@ -70,13 +73,12 @@ void gen_value(Node *node, char *reg_ptr)
         printf("    mov eax, DWORD PTR [%s]\n", reg_ptr);
         printf("    movsxd rax, eax\n");
     }
-    else if (node->ty->size == 8)
+    else if (node->ty->size == 8 || node->ty->kind == TY_ARRAY)
     {
         printf("    mov rax, QWORD PTR [%s]\n", reg_ptr);
     }
     else
-        error("存在しないサイズです。size: %d in codegen.c gen_value", node->lhs->ty->size);
-    printf("    push rax # value of var\n");
+        error("存在しないサイズです。size: %d in codegen.c load", node->ty->size);
     return;
 }
 
@@ -223,26 +225,14 @@ void gen_expr(Node *node)
     case ND_LVAR:
         gen_addr(node);
         printf("    pop rax # address of variable\n");
-
-        if (node->ty->kind == TY_ARRAY)
-        {
-            printf("    push rax # value of array var\n");
-            return;
-        }
-
-        gen_value(node, "rax");
+        load(node, "rax");
+        printf("    push rax # value of variable\n");
         return;
     case ND_GVAR:
         gen_addr(node);
-        printf("    pop rax # address of var\n");
-
-        if (node->ty->kind == TY_ARRAY)
-        {
-            printf("    push rax # value of array var\n");
-            return;
-        }
-
-        gen_value(node, "rax");
+        printf("    pop rax # address of varriable\n");
+        load(node, "rax");
+        printf("    push rax # value of variable\n");
         return;
     case ND_ASSIGN:
         if (node->lhs->kind == ND_LVAR || node->lhs->kind == ND_GVAR || node->lhs->kind == ND_MEMBER)
@@ -301,9 +291,9 @@ void gen_expr(Node *node)
         return;
     case ND_DEREF:
         gen_addr(node);
-        printf("    pop rax\n");
-
-        gen_value(node, "rax");
+        printf("    pop rax # addr of deref\n");
+        load(node, "rax");
+        printf("    push rax # val of deref\n");
         return;
     case ND_ADDR:
         if (node->lhs->kind == ND_LVAR || node->lhs->kind == ND_GVAR || node->lhs->kind == ND_MEMBER)
@@ -323,8 +313,8 @@ void gen_expr(Node *node)
     case ND_MEMBER:
         gen_addr(node);
         printf("    pop rax\n");
-
-        gen_value(node, "rax");
+        load(node, "rax");
+        printf("    push rax # value of member\n");
         return;
     default:
         break;

@@ -11,7 +11,7 @@ static void new_func(char *name, Type *ty);
 // ebnf
 static Type *declspec();
 static Type *declarator(Type *type);
-static Type *declaration(Type *ty);
+static Type *type_suffix(Type *ty);
 static Type *struct_def();
 static Member *struct_members();
 static Obj *global_variable(Type *ty, Token *tok);
@@ -194,7 +194,7 @@ Type *struct_def()
     return ty;
 }
 
-// struct_members = ( declspec declarator declaration ";" )* "}"
+// struct_members = ( declspec declarator type_suffix ";" )* "}"
 Member *struct_members()
 {
     Member *members = calloc(1, sizeof(Member));
@@ -208,7 +208,7 @@ Member *struct_members()
         if (!member_ty)
             error_at(token->str, "member_ty is NULL in struct_def");
 
-        member_ty = declaration(member_ty);
+        member_ty = type_suffix(member_ty);
 
         Member *member = create_new_member(member_ty, members);
         members = member;
@@ -234,16 +234,18 @@ Type *declarator(Type *ty)
     return ty;
 }
 
-// declaration = ("[" num "]")?
-Type *declaration(Type *base_ty)
+// type_suffix = "[" num "]" type_suffix
+//             | ε
+Type *type_suffix(Type *base_ty)
 {
     if (!base_ty)
-        error_at(token->str, "base_ty is null in declaration");
+        error_at(token->str, "base_ty is null in type_suffix");
 
     if (consume_reserved("["))
     {
         int array_len = expect_number();
         expect_reserved("]");
+        base_ty = type_suffix(base_ty);
         return array_of(base_ty, array_len);
     }
     return base_ty;
@@ -286,11 +288,11 @@ Obj *program()
     return globals;
 }
 
-// globale-variable = declaration ";"
+// globale-variable = type_suffix ";"
 Obj *global_variable(Type *ty, Token *tok_ident)
 {
     Obj *gvar;
-    ty = declaration(ty);
+    ty = type_suffix(ty);
     gvar = new_gvar(tok_ident, ty);
     expect_reserved(";");
     return gvar;
@@ -344,7 +346,7 @@ Obj *function_def(Type *return_ty, Token *tok_ident)
 }
 
 // stmt = expr ";"
-//      | declspec declarator declaration ";"
+//      | declspec declarator type_suffix ";"
 //      | "return" expr ";"
 //      | "if" "(" expr ")" stmt ("else" stmt)?
 //      | "while" "(" expr ")" stmt
@@ -359,7 +361,7 @@ Node *stmt()
         node = calloc(1, sizeof(Node));
         node->kind = ND_TYPE_DEF;
         Type *ty = declarator(base_type);
-        ty = declaration(ty);
+        ty = type_suffix(ty);
 
         Obj *lvar = find_lvar(ty->name);
         if (lvar)
@@ -697,37 +699,35 @@ Node *unary()
     return postfix();
 }
 
-// postfix = primary ( "[" expr "]" | "." ident )?
+// postfix = primary ( "[" expr "]" | "." ident )*
 Node *postfix()
 {
     Node *node = primary();
 
-    if (consume_reserved("["))
+    for (;;)
     {
-        node = new_node_add(node, expr());
-        expect_reserved("]");
+        if (consume_reserved("["))
+        {
+            node = new_node(ND_DEREF, new_node_add(node, expr()));
+            expect_reserved("]");
+            add_type(node);
+        }
+        else if (consume_reserved("."))
+        {
+            Token *tok = consume_ident();
+            Member *member = find_member(tok, node->ty->members);
+            if (!member)
+                error_at(token->str, "member is not found. in parse.c postfix");
+            node = new_node(ND_MEMBER, node);
+            node->member = member;
 
-        node = new_node(ND_DEREF, node);
-
-        add_type(node);
-        return node;
-    }
-    else if (consume_reserved("."))
-    {
-        Token *tok = consume_ident();
-        Member *member = find_member(tok, node->ty->members);
-        if (!member)
-            error_at(token->str, "member is not found. in parse.c postfix");
-        node = new_node(ND_MEMBER, node);
-        node->member = member;
-
-        add_type(node);
-        return node;
-    }
-    else
-    {
-        add_type(node);
-        return node;
+            add_type(node);
+        }
+        else
+        {
+            add_type(node);
+            return node;
+        }
     }
 }
 
