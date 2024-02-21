@@ -208,10 +208,55 @@ int f12()
     int j;
     int a;
     a = 0;
-    for (i = 0; i < 3; i = i + 1)
+    for (i = 0; i < 2; i = i + 1)
     {
-        a = a + x[0][i];
-        a = a + x[1][i];
+        for (j = 0; j < 3; j = j + 1)
+        {
+            a = a + x[i][j];
+        }
+    }
+    return a;
+}
+
+// x==0: 0
+// x==1: 1
+// x==2: 2
+int f13(int x)
+{
+    if (x)
+    {
+        if (x - 1)
+        {
+            return 2;
+        }
+        else
+        {
+            return 1;
+        }
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+// 12
+int f14()
+{
+    int i;
+    int j;
+    int a;
+    a = 0;
+    i = 0;
+    while (i < 4)
+    {
+        j = 0;
+        while (j < 3)
+        {
+            a = a + 1;
+            j = j + 1;
+        }
+        i = i + 1;
     }
     return a;
 }
@@ -267,7 +312,10 @@ int main()
     assert(17, f10());                                                                    // 45
     assert(5, f11());                                                                     // 46
     assert(6, f12());                                                                     // 47
-
+    assert(0, f13(0));                                                                    // 48
+    assert(1, f13(1));                                                                    // 49
+    assert(2, f13(2));                                                                    // 50
+    assert(12, f14());                                                                    // 51
     if (error_num == 0)
         printf("OK\n");
     return 0;
