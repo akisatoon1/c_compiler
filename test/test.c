@@ -58,12 +58,9 @@ int fib(int x)
 
 int f1(int x)
 {
-    int y;
-    int *z;
-    int **a;
-    y = 5;
-    z = &y;
-    a = &z;
+    int y = 5;
+    int *z = &y;
+    int **a = &z;
     return x + *z + **a;
 }
 
@@ -71,8 +68,7 @@ int f1(int x)
 int f2()
 {
     int x[5];
-    int a;
-    a = 0;
+    int a = 0;
     x[0] = 0;
     x[1] = 1;
     x[2] = 2;
@@ -89,8 +85,7 @@ int f2()
 // 4
 int f3()
 {
-    char x;
-    x = 4;
+    char x = 4;
     return x;
 }
 
@@ -243,11 +238,9 @@ int f13(int x)
 // 12
 int f14()
 {
-    int i;
+    int i = 0;
     int j;
-    int a;
-    a = 0;
-    i = 0;
+    int a = 0;
     while (i < 4)
     {
         j = 0;

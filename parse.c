@@ -346,7 +346,7 @@ Obj *function_def(Type *return_ty, Token *tok_ident)
 }
 
 // stmt = expr ";"
-//      | declspec declarator type_suffix ";"
+//      | declspec declarator type_suffix ("=" expr )? ";"
 //      | "return" expr ";"
 //      | "if" "(" expr ")" stmt ("else" stmt)?
 //      | "while" "(" expr ")" stmt
@@ -359,7 +359,10 @@ Node *stmt()
     if (base_type)
     {
         node = calloc(1, sizeof(Node));
-        node->kind = ND_TYPE_DEF;
+        node->kind = ND_BLOCK;
+        Node head = {};
+        Node *cur = &head;
+
         Type *ty = declarator(base_type);
         ty = type_suffix(ty);
 
@@ -368,15 +371,17 @@ Node *stmt()
         {
             error_at(ty->name->str, "'%s'は既に使われている変数または配列名です。", trim(ty->name->str, ty->name->len));
         }
-        else
+        lvar = new_lvar(ty->name, ty);
+        node->var = lvar;
+        locals = lvar;
+
+        if (consume_reserved("="))
         {
-            lvar = new_lvar(ty->name, ty);
-
-            node->var = lvar;
-
-            locals = lvar;
+            cur = cur->next = new_node_binary(ND_ASSIGN, new_node_var(calloc(1, sizeof(Node)), ty->name), expr());
         }
+        node->body = head.next;
         expect_reserved(";");
+        return node;
     }
     else if (consume_keyword("return"))
     {
@@ -485,40 +490,23 @@ Node *assign()
 }
 
 // equality = relational ("==" relational | "!=" relational)*
-//          | string
 Node *equality()
 {
-    Token *tok = consume_string();
-    if (tok)
+    Node *node = relational();
+    for (;;)
     {
-        Node *node = calloc(1, sizeof(Node));
-        node->kind = ND_STRING;
-        node->str = trim(tok->str, tok->len);
-
-        Type *ty = pointer_to(ty_char);
-        node->ty = ty;
-
-        add_type(node);
-        return node;
-    }
-    else
-    {
-        Node *node = relational();
-        for (;;)
+        if (consume_reserved("=="))
         {
-            if (consume_reserved("=="))
-            {
-                node = new_node_binary(ND_EQ, node, relational());
-            }
-            else if (consume_reserved("!="))
-            {
-                node = new_node_binary(ND_NE, node, relational());
-            }
-            else
-            {
-                add_type(node);
-                return node;
-            }
+            node = new_node_binary(ND_EQ, node, relational());
+        }
+        else if (consume_reserved("!="))
+        {
+            node = new_node_binary(ND_NE, node, relational());
+        }
+        else
+        {
+            add_type(node);
+            return node;
         }
     }
 }
@@ -735,6 +723,7 @@ Node *postfix()
 //         | ident ("(" ")")?
 //         | ident "(" expr ("," expr)* ")"
 //         | num
+//         | string
 Node *primary()
 {
     if (consume_reserved("("))
@@ -771,6 +760,20 @@ Node *primary()
         {
             return new_node_var(node, tok);
         }
+    }
+
+    tok = consume_string();
+    if (tok)
+    {
+        Node *node = calloc(1, sizeof(Node));
+        node->kind = ND_STRING;
+        node->str = trim(tok->str, tok->len);
+
+        Type *ty = pointer_to(ty_char);
+        node->ty = ty;
+
+        add_type(node);
+        return node;
     }
 
     return new_node_num(expect_number());

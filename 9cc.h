@@ -117,12 +117,11 @@ typedef enum
     ND_IF,       // if
     ND_WHILE,    // while
     ND_FOR,      // for
-    ND_BLOCK,    // {}
+    ND_BLOCK,    // stmts ex) {}
     ND_FUNCCALL, // call function
     ND_NUM,      // num literal
     ND_DEREF,    // *
     ND_ADDR,     // &
-    ND_TYPE_DEF, // int or char(declaration)
     ND_STRING,   // string literal
     ND_MEMBER,   // member
 } NodeKind;

@@ -219,9 +219,6 @@ void gen_stmt(Node *node)
     case ND_FOR:
         gen_for(node);
         return;
-    case ND_TYPE_DEF:
-        printf("    # type definition\n");
-        return;
     case ND_BLOCK:
         for (Node *n = node->body; n; n = n->next)
         {
