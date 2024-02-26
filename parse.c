@@ -477,7 +477,7 @@ Node *expr()
     return assign();
 }
 
-// assign = equality ("=" assign)?
+// assign = equality ( ("=" | "+=" | "-=") assign)?
 Node *assign()
 {
     Node *node = equality();
@@ -485,6 +485,17 @@ Node *assign()
     {
         node = new_node_binary(ND_ASSIGN, node, assign());
     }
+
+    else if (consume_reserved("+="))
+    {
+        node = new_node_binary(ND_ASSIGN, node, new_node_add(node, assign()));
+    }
+
+    else if (consume_reserved("-="))
+    {
+        node = new_node_binary(ND_ASSIGN, node, new_node_sub(node, assign()));
+    }
+
     add_type(node);
     return node;
 }
@@ -720,8 +731,7 @@ Node *postfix()
 }
 
 // primary = "(" expr ")"
-//         | ident ("(" ")")?
-//         | ident "(" expr ("," expr)* ")"
+//         | ident "(" ( expr ("," expr)* )? ")"
 //         | num
 //         | string
 Node *primary()

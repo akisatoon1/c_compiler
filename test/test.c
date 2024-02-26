@@ -117,10 +117,10 @@ int f6()
     while (i < 5)
     {
         if (i < 3)
-            a = a + i;
+            a += i;
         else
-            a = a + 1;
-        i = i + 1;
+            a += 1;
+        i += 1;
     }
     return a;
 }
@@ -203,11 +203,11 @@ int f12()
     int j;
     int a;
     a = 0;
-    for (i = 0; i < 2; i = i + 1)
+    for (i = 0; i < 2; i += 1)
     {
-        for (j = 0; j < 3; j = j + 1)
+        for (j = 0; j < 3; j += 1)
         {
-            a = a + x[i][j];
+            a += x[i][j];
         }
     }
     return a;
@@ -246,12 +246,24 @@ int f14()
         j = 0;
         while (j < 3)
         {
-            a = a + 1;
-            j = j + 1;
+            a += 1;
+            j += 1;
         }
-        i = i + 1;
+        i += 1;
     }
     return a;
+}
+
+// 1
+int f15()
+{
+    int x;
+    int y = 5;
+    x = y -= 5;
+    if (x == y)
+        return 1;
+    else
+        return 0;
 }
 
 int main()
@@ -309,6 +321,7 @@ int main()
     assert(1, f13(1));                                                                    // 49
     assert(2, f13(2));                                                                    // 50
     assert(12, f14());                                                                    // 51
+    assert(1, f15());                                                                     // 52
     if (error_num == 0)
         printf("OK\n");
     return 0;
