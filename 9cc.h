@@ -16,12 +16,12 @@ typedef struct Function Function;
 // TokenKind
 typedef enum
 {
-    TK_RESERVED, // 記号
-    TK_IDENT,    // 識別子
-    TK_NUM,      // 整数トークン
-    TK_KEYWORD,  // keyword
-    TK_STRING,   // string
-    TK_EOF       // 入力の終わりを示すトークン
+    TK_PUNCT,   // 記号
+    TK_IDENT,   // 識別子
+    TK_NUM,     // 整数トークン
+    TK_KEYWORD, // keyword
+    TK_STRING,  // string
+    TK_EOF      // 入力の終わりを示すトークン
 } TokenKind;
 
 struct Token
@@ -180,8 +180,8 @@ bool is_ident2(char c);
 // use token
 bool at_eof();
 int expect_number();
-void expect_reserved(char *op);
-bool consume_reserved(char *op);
+void expect_punct(char *op);
+bool consume_punct(char *op);
 bool consume_keyword(char *op);
 Token *consume_ident();
 Token *consume_string();

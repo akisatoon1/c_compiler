@@ -2,10 +2,12 @@
 
 // keyword
 char *keywords[] = {"return", "if", "else", "while", "for", "int", "char", "sizeof", "struct"};
+char *long_puncts[] = {">=", "<=", "==", "!=", "+=", "-=", "++", "--"};
 
 static bool is_keyword(char *p, char *s);
 static bool is_alnum(char c);
 static char *return_keyword(char *p);
+static bool is_long_punct(char *p);
 
 bool is_keyword(char *p, char *s)
 {
@@ -26,6 +28,17 @@ char *return_keyword(char *p)
             return keywords[i];
     }
     return NULL;
+}
+
+bool is_long_punct(char *p)
+{
+    int len = sizeof(long_puncts) / 8;
+    for (int i = 0; i < len; i++)
+    {
+        if (!strncmp(p, long_puncts[i], 2))
+            return true;
+    }
+    return false;
 }
 
 Token *new_token(TokenKind kind, Token *cur, char *str, int len)
@@ -83,15 +96,15 @@ Token *tokenize(char *p)
         }
 
         // 長い記号を先にトークナイズする。
-        if (strncmp(p, ">=", 2) == 0 || strncmp(p, "<=", 2) == 0 || strncmp(p, "==", 2) == 0 || strncmp(p, "!=", 2) == 0 || strncmp(p, "+=", 2) == 0 || strncmp(p, "-=", 2) == 0 || strncmp(p, "++", 2) == 0 || strncmp(p, "--", 2) == 0)
+        if (is_long_punct(p))
         {
-            cur = new_token(TK_RESERVED, cur, p, 2);
+            cur = new_token(TK_PUNCT, cur, p, 2);
             p += 2;
             continue;
         }
         if (strchr("+-*&/()<>;={}[],.", *p))
         {
-            cur = new_token(TK_RESERVED, cur, p++, 1);
+            cur = new_token(TK_PUNCT, cur, p++, 1);
             continue;
         }
         if (strchr("\"", *p))

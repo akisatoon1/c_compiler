@@ -22,9 +22,9 @@ bool consume_keyword(char *op)
     return true;
 }
 
-bool consume_reserved(char *op)
+bool consume_punct(char *op)
 {
-    if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(op, token->str, token->len))
+    if (token->kind != TK_PUNCT || strlen(op) != token->len || memcmp(op, token->str, token->len))
     {
         return false;
     }
@@ -43,9 +43,9 @@ Token *consume_ident()
     return cur_token;
 }
 
-void expect_reserved(char *op)
+void expect_punct(char *op)
 {
-    if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(op, token->str, token->len))
+    if (token->kind != TK_PUNCT || strlen(op) != token->len || memcmp(op, token->str, token->len))
     {
         error_at(token->str, "'%s'ではありません", op);
     }

@@ -186,7 +186,7 @@ Type *struct_def()
     Type *ty = calloc(1, sizeof(Type));
     ty->kind = TY_STRUCT;
 
-    expect_reserved("{");
+    expect_punct("{");
     Member *members = struct_members();
 
     ty->size = members->offset + members->size;
@@ -198,7 +198,7 @@ Type *struct_def()
 Member *struct_members()
 {
     Member *members = calloc(1, sizeof(Member));
-    while (!consume_reserved("}"))
+    while (!consume_punct("}"))
     {
         Type *base_ty = declspec();
         if (!base_ty)
@@ -213,7 +213,7 @@ Member *struct_members()
         Member *member = create_new_member(member_ty, members);
         members = member;
 
-        expect_reserved(";");
+        expect_punct(";");
     }
     return members;
 }
@@ -223,7 +223,7 @@ Type *declarator(Type *ty)
 {
     if (!ty)
         error_at(token->str, "type is NULL in declarator");
-    while (consume_reserved("*"))
+    while (consume_punct("*"))
     {
         ty = pointer_to(ty);
     }
@@ -241,10 +241,10 @@ Type *type_suffix(Type *base_ty)
     if (!base_ty)
         error_at(token->str, "base_ty is null in type_suffix");
 
-    if (consume_reserved("["))
+    if (consume_punct("["))
     {
         int array_len = expect_number();
-        expect_reserved("]");
+        expect_punct("]");
         base_ty = type_suffix(base_ty);
         return array_of(base_ty, array_len);
     }
@@ -268,7 +268,7 @@ Obj *program()
             error_at(token->str, "存在しない型です。in parse.c program()");
         Type *ty = declarator(base_type);
 
-        if (consume_reserved("("))
+        if (consume_punct("("))
         {
             locals = calloc(1, sizeof(Obj));
             Obj *func = function_def(ty, ty->name);
@@ -294,7 +294,7 @@ Obj *global_variable(Type *ty, Token *tok_ident)
     Obj *gvar;
     ty = type_suffix(ty);
     gvar = new_gvar(tok_ident, ty);
-    expect_reserved(";");
+    expect_punct(";");
     return gvar;
 }
 
@@ -316,7 +316,7 @@ Obj *function_def(Type *return_ty, Token *tok_ident)
 
     func->name = trim(tok_ident->str, tok_ident->len);
 
-    while (!consume_reserved(")"))
+    while (!consume_punct(")"))
     {
         // トークンを読み込む
         Type *base_type = declspec();
@@ -335,7 +335,7 @@ Obj *function_def(Type *return_ty, Token *tok_ident)
             locals = lvar;
         }
 
-        consume_reserved(",");
+        consume_punct(",");
     }
 
     func->params = locals; // params vector
@@ -375,25 +375,25 @@ Node *stmt()
         node->var = lvar;
         locals = lvar;
 
-        if (consume_reserved("="))
+        if (consume_punct("="))
         {
             cur = cur->next = new_node_binary(ND_ASSIGN, new_node_var(calloc(1, sizeof(Node)), ty->name), expr());
         }
         node->body = head.next;
-        expect_reserved(";");
+        expect_punct(";");
         return node;
     }
     else if (consume_keyword("return"))
     {
         node = new_node(ND_RETURN, expr());
-        expect_reserved(";");
+        expect_punct(";");
     }
-    else if (consume_reserved("{"))
+    else if (consume_punct("{"))
     {
         Node head;
         head.next = NULL;
         Node *cur = &head;
-        while (!consume_reserved("}"))
+        while (!consume_punct("}"))
         {
             cur->next = stmt();
             cur = cur->next;
@@ -405,11 +405,11 @@ Node *stmt()
     }
     else if (consume_keyword("if"))
     {
-        expect_reserved("(");
+        expect_punct("(");
         node = calloc(1, sizeof(Node));
         node->kind = ND_IF;
         node->cond = expr();
-        expect_reserved(")");
+        expect_punct(")");
         node->then = stmt();
         if (consume_keyword("else"))
         {
@@ -422,51 +422,51 @@ Node *stmt()
     }
     else if (consume_keyword("while"))
     {
-        expect_reserved("(");
+        expect_punct("(");
         node = calloc(1, sizeof(Node));
         node->kind = ND_WHILE;
         node->cond = expr();
-        expect_reserved(")");
+        expect_punct(")");
         node->then = stmt();
     }
     else if (consume_keyword("for"))
     {
-        expect_reserved("(");
+        expect_punct("(");
         node = calloc(1, sizeof(Node));
         node->kind = ND_FOR;
-        if (consume_reserved(";"))
+        if (consume_punct(";"))
         {
             node->init = NULL;
         }
         else
         {
             node->init = expr();
-            expect_reserved(";");
+            expect_punct(";");
         }
-        if (consume_reserved(";"))
+        if (consume_punct(";"))
         {
             node->cond = NULL;
         }
         else
         {
             node->cond = expr();
-            expect_reserved(";");
+            expect_punct(";");
         }
-        if (consume_reserved(")"))
+        if (consume_punct(")"))
         {
             node->inc = NULL;
         }
         else
         {
             node->inc = expr();
-            expect_reserved(")");
+            expect_punct(")");
         }
         node->then = stmt();
     }
     else
     {
         node = expr();
-        expect_reserved(";");
+        expect_punct(";");
     }
     return node;
 }
@@ -481,17 +481,17 @@ Node *expr()
 Node *assign()
 {
     Node *node = equality();
-    if (consume_reserved("="))
+    if (consume_punct("="))
     {
         node = new_node_binary(ND_ASSIGN, node, assign());
     }
 
-    else if (consume_reserved("+="))
+    else if (consume_punct("+="))
     {
         node = new_node_binary(ND_ASSIGN, node, new_node_add(node, assign()));
     }
 
-    else if (consume_reserved("-="))
+    else if (consume_punct("-="))
     {
         node = new_node_binary(ND_ASSIGN, node, new_node_sub(node, assign()));
     }
@@ -506,11 +506,11 @@ Node *equality()
     Node *node = relational();
     for (;;)
     {
-        if (consume_reserved("=="))
+        if (consume_punct("=="))
         {
             node = new_node_binary(ND_EQ, node, relational());
         }
-        else if (consume_reserved("!="))
+        else if (consume_punct("!="))
         {
             node = new_node_binary(ND_NE, node, relational());
         }
@@ -528,19 +528,19 @@ Node *relational()
     Node *node = add();
     for (;;)
     {
-        if (consume_reserved("<="))
+        if (consume_punct("<="))
         {
             node = new_node_binary(ND_LE, node, add());
         }
-        else if (consume_reserved(">="))
+        else if (consume_punct(">="))
         {
             node = new_node_binary(ND_LE, add(), node);
         }
-        else if (consume_reserved("<"))
+        else if (consume_punct("<"))
         {
             node = new_node_binary(ND_LT, node, add());
         }
-        else if (consume_reserved(">"))
+        else if (consume_punct(">"))
         {
             node = new_node_binary(ND_LT, add(), node);
         }
@@ -621,11 +621,11 @@ Node *add()
     Node *node = mul();
     for (;;)
     {
-        if (consume_reserved("+"))
+        if (consume_punct("+"))
         {
             node = new_node_add(node, mul());
         }
-        else if (consume_reserved("-"))
+        else if (consume_punct("-"))
         {
             node = new_node_sub(node, mul());
         }
@@ -643,11 +643,11 @@ Node *mul()
     Node *node = unary();
     for (;;)
     {
-        if (consume_reserved("*"))
+        if (consume_punct("*"))
         {
             node = new_node_binary(ND_MUL, node, unary());
         }
-        else if (consume_reserved("/"))
+        else if (consume_punct("/"))
         {
             node = new_node_binary(ND_DIV, node, unary());
         }
@@ -663,22 +663,22 @@ Node *mul()
 //       | postfix
 Node *unary()
 {
-    if (consume_reserved("+"))
+    if (consume_punct("+"))
     {
         return unary();
     }
-    if (consume_reserved("-"))
+    if (consume_punct("-"))
     {
         return new_node_binary(ND_SUB, new_node_num(0), unary());
     }
-    if (consume_reserved("*"))
+    if (consume_punct("*"))
     {
         Node *node = new_node(ND_DEREF, unary());
 
         add_type(node);
         return node;
     }
-    if (consume_reserved("&"))
+    if (consume_punct("&"))
     {
         Node *node = calloc(1, sizeof(Node));
         node->lhs = unary();
@@ -690,12 +690,12 @@ Node *unary()
         add_type(node);
         return node;
     }
-    if (consume_reserved("++"))
+    if (consume_punct("++"))
     {
         Node *node = unary();
         return new_node_binary(ND_ASSIGN, node, new_node_add(node, new_node_num(1)));
     }
-    if (consume_reserved("--"))
+    if (consume_punct("--"))
     {
         Node *node = unary();
         return new_node_binary(ND_ASSIGN, node, new_node_sub(node, new_node_num(1)));
@@ -715,13 +715,13 @@ Node *postfix()
 
     for (;;)
     {
-        if (consume_reserved("["))
+        if (consume_punct("["))
         {
             node = new_node(ND_DEREF, new_node_add(node, expr()));
-            expect_reserved("]");
+            expect_punct("]");
             add_type(node);
         }
-        else if (consume_reserved("."))
+        else if (consume_punct("."))
         {
             Token *tok = consume_ident();
             Member *member = find_member(tok, node->ty->members);
@@ -746,10 +746,10 @@ Node *postfix()
 //         | string
 Node *primary()
 {
-    if (consume_reserved("("))
+    if (consume_punct("("))
     {
         Node *node = expr();
-        expect_reserved(")");
+        expect_punct(")");
 
         add_type(node);
         return node;
@@ -758,7 +758,7 @@ Node *primary()
     if (tok)
     {
         Node *node = calloc(1, sizeof(Node));
-        if (consume_reserved("("))
+        if (consume_punct("("))
         {
             Node head = {};
             Node *cur = &head;
@@ -766,10 +766,10 @@ Node *primary()
             node->funcname = trim(tok->str, tok->len);
             find_func(node->funcname);
 
-            while (!consume_reserved(")"))
+            while (!consume_punct(")"))
             {
                 cur = cur->next = expr();
-                consume_reserved(",");
+                consume_punct(",");
             }
             node->args = head.next;
 
