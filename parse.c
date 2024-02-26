@@ -659,7 +659,7 @@ Node *mul()
     }
 }
 
-// unary = ("+" | "-" | "*" | "&" | "sizeof") unary
+// unary = ("+" | "-" | "*" | "&" | "++" | "--" | "sizeof") unary
 //       | postfix
 Node *unary()
 {
@@ -689,6 +689,16 @@ Node *unary()
         node->kind = ND_ADDR;
         add_type(node);
         return node;
+    }
+    if (consume_reserved("++"))
+    {
+        Node *node = unary();
+        return new_node_binary(ND_ASSIGN, node, new_node_add(node, new_node_num(1)));
+    }
+    if (consume_reserved("--"))
+    {
+        Node *node = unary();
+        return new_node_binary(ND_ASSIGN, node, new_node_sub(node, new_node_num(1)));
     }
     if (consume_keyword("sizeof"))
     {
