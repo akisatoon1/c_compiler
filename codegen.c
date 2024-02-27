@@ -24,7 +24,7 @@ static void gen_for(Node *node);
 
 // load value of variable from the variable address
 // (address is already in register)
-static void load(Node *node, char *reg_ptr);
+static void load(Node *node);
 
 void gen_gvar(Obj *gvar)
 {
@@ -62,23 +62,23 @@ static void gen_addr(Node *node)
     }
 }
 
-void load(Node *node, char *reg_ptr)
+void load(Node *node)
 {
     if (node->ty->kind == TY_ARRAY)
         return;
     if (node->ty->size == 1)
     {
-        printf("    mov al, BYTE PTR [%s]\n", reg_ptr);
+        printf("    mov al, BYTE PTR [rax]\n");
         printf("    movsx rax, al\n");
     }
     else if (node->ty->size == 4)
     {
-        printf("    mov eax, DWORD PTR [%s]\n", reg_ptr);
+        printf("    mov eax, DWORD PTR [rax]\n");
         printf("    movsxd rax, eax\n");
     }
     else if (node->ty->size == 8 || node->ty->kind == TY_ARRAY)
     {
-        printf("    mov rax, QWORD PTR [%s]\n", reg_ptr);
+        printf("    mov rax, QWORD PTR [rax]\n");
     }
     else
         error("存在しないサイズです。size: %d in codegen.c load", node->ty->size);
@@ -242,13 +242,13 @@ void gen_expr(Node *node)
     case ND_LVAR:
         gen_addr(node);
         printf("    pop rax # address of variable\n");
-        load(node, "rax");
+        load(node);
         printf("    push rax # value of variable\n");
         return;
     case ND_GVAR:
         gen_addr(node);
         printf("    pop rax # address of varriable\n");
-        load(node, "rax");
+        load(node);
         printf("    push rax # value of variable\n");
         return;
     case ND_ASSIGN:
@@ -309,7 +309,7 @@ void gen_expr(Node *node)
     case ND_DEREF:
         gen_addr(node);
         printf("    pop rax # addr of deref\n");
-        load(node, "rax");
+        load(node);
         printf("    push rax # val of deref\n");
         return;
     case ND_ADDR:
@@ -330,7 +330,7 @@ void gen_expr(Node *node)
     case ND_MEMBER:
         gen_addr(node);
         printf("    pop rax\n");
-        load(node, "rax");
+        load(node);
         printf("    push rax # value of member\n");
         return;
     default:
