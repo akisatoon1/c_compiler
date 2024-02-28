@@ -708,7 +708,7 @@ Node *unary()
     return postfix();
 }
 
-// postfix = primary ( "[" expr "]" | "." ident )*
+// postfix = primary ( "[" expr "]" | "." ident | "++" | "--" )*
 Node *postfix()
 {
     Node *node = primary();
@@ -731,6 +731,16 @@ Node *postfix()
             node->member = member;
 
             add_type(node);
+        }
+        else if (consume_punct("++"))
+        {
+            node = new_node_binary(ND_ASSIGN, node, new_node_add(node, new_node_num(1)));
+            return new_node_sub(node, new_node_num(1));
+        }
+        else if (consume_punct("--"))
+        {
+            node = new_node_binary(ND_ASSIGN, node, new_node_sub(node, new_node_num(1)));
+            return new_node_add(node, new_node_num(1));
         }
         else
         {

@@ -13,13 +13,13 @@ int assert(int expected, int actual)
 {
     if (expected != actual)
     {
-        error_num = error_num + 1;
+        error_num++;
         printf("\x1b[31m");
         printf("\ntest%d error!\n", num);
         printf("\x1b[0m");
         printf("expected is %d, but actual is %d\n", expected, actual);
     }
-    num = num + 1;
+    num++;
     return 0;
 }
 
@@ -255,16 +255,24 @@ int f14()
     return a;
 }
 
-// 1
+// 0
 int f15()
 {
-    int x;
-    int y = 5;
-    x = y -= 5;
-    if (x == y)
-        return 1;
-    else
-        return 0;
+    int x = 0;
+    int y = 0;
+    int z = 0;
+    x = ++y + 5;
+    z = (--y - 1) * 6;
+    return x + y + z;
+}
+
+// 30
+int f16()
+{
+    int x = 6;
+    int y = x++;
+    int z = y-- * 3;
+    return x + y + z;
 }
 
 int main()
@@ -322,7 +330,8 @@ int main()
     assert(1, f13(1));                                                                    // 49
     assert(2, f13(2));                                                                    // 50
     assert(12, f14());                                                                    // 51
-    assert(1, f15());                                                                     // 52
+    assert(0, f15());                                                                     // 52
+    assert(30, f16());                                                                    // 53
     if (error_num == 0)
         printf("OK\n");
     return 0;
