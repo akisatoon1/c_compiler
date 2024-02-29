@@ -12,6 +12,15 @@ bool is_ident2(char c)
     return is_ident1(c) || ('0' <= c && c <= '9');
 }
 
+bool equal_tok(char *s, Token *tok)
+{
+    if (strlen(s) != tok->len || memcmp(s, tok->str, tok->len))
+    {
+        return false;
+    }
+    return true;
+}
+
 bool consume_keyword(char *op)
 {
     if (token->kind != TK_KEYWORD || strlen(op) != token->len || memcmp(op, token->str, token->len))

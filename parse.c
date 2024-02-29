@@ -1,18 +1,15 @@
 #include "9cc.h"
 
-// variable vector
-static Obj *locals;
-static Obj *globals;
-
 // func
 Function *funcs;
 static void new_func(char *name, Type *ty);
+Type *find_func(char *name);
 
 // ebnf
 static Type *declspec();
 static Type *declarator(Type *type);
 static Type *type_suffix(Type *ty);
-static Type *struct_def();
+static Type *struct_decl();
 static Member *struct_members();
 static Obj *global_variable(Type *ty, Token *tok);
 static Obj *function_def(Type *ty, Token *tok);
@@ -39,14 +36,21 @@ static Node *new_node_sub(Node *lhs, Node *rhs);
 static Obj *new_lvar(Token *tok, Type *ty);
 static Obj *new_gvar(Token *tok, Type *ty);
 
-// find
+// var
+static Obj *locals;
+static Obj *globals;
 static Obj *find_lvar(Token *tok);
 static Obj *find_gvar(Token *tok);
-static Member *find_member(Token *tok, Member *members);
-Type *find_func(char *name);
 
-// create member
+// struct
+static Tag *global_tags;
+// static Tag *local_tags;
+static Tag *find_tag(char *name);
+static void *push_tag(Tag *tag);
+
+// member
 static Member *create_new_member(Type *ty, Member *mems);
+static Member *find_member(Token *tok, Member *members);
 
 // align
 static int align_to(int n, int align);
@@ -167,7 +171,7 @@ Obj *new_gvar(Token *tok, Type *ty)
 
 // declspec = "int"
 //          | "char"
-//          | "struct" struct_def
+//          | "struct" struct_decl
 Type *declspec()
 {
     if (consume_keyword("int"))
@@ -175,23 +179,52 @@ Type *declspec()
     else if (consume_keyword("char"))
         return ty_char;
     else if (consume_keyword("struct"))
-        return struct_def();
+        return struct_decl();
     else
         return NULL;
 }
 
-// struct_def = "{" struct_members
-Type *struct_def()
+// struct_decl = ident? "{" struct_members
+//             | ident
+Type *struct_decl()
 {
     Type *ty = calloc(1, sizeof(Type));
     ty->kind = TY_STRUCT;
 
-    expect_punct("{");
-    Member *members = struct_members();
+    Token *tok = consume_ident();
+    if (tok)
+    {
+        Tag *tag = find_tag(trim(tok->str, tok->len));
+        if (tag)
+        {
+            if (equal_tok("{", token))
+                error_at(token->str, "定義済みの構造体タグです。tag->name: %s", tag->name);
+            return tag->ty;
+        }
+        else
+        {
+            tag = calloc(1, sizeof(Tag));
 
-    ty->size = members->offset + members->size;
-    ty->members = members;
-    return ty;
+            expect_punct("{");
+            Member *members = struct_members();
+            ty->size = members->offset + members->size;
+            ty->members = members;
+
+            tag->name = trim(tok->str, tok->len);
+            tag->ty = ty;
+            push_tag(tag);
+            return ty;
+        }
+    }
+    else
+    {
+        expect_punct("{");
+        Member *members = struct_members();
+
+        ty->size = members->offset + members->size;
+        ty->members = members;
+        return ty;
+    }
 }
 
 // struct_members = ( declspec declarator type_suffix ";" )* "}"
@@ -202,11 +235,11 @@ Member *struct_members()
     {
         Type *base_ty = declspec();
         if (!base_ty)
-            error_at(token->str, "base_ty is NULL in struct_def");
+            error_at(token->str, "base_ty is NULL in struct_decl");
 
         Type *member_ty = declarator(base_ty);
         if (!member_ty)
-            error_at(token->str, "member_ty is NULL in struct_def");
+            error_at(token->str, "member_ty is NULL in struct_decl");
 
         member_ty = type_suffix(member_ty);
 
@@ -251,10 +284,11 @@ Type *type_suffix(Type *base_ty)
     return base_ty;
 }
 
-// program = (declspec declarator ( "(" function-def | global-variable ) )*
+// program = ( declspec declarator "(" function-def | declspec (declarator global-variable)? ";" )*
 Obj *program()
 {
     globals = calloc(1, sizeof(Obj));
+    global_tags = calloc(1, sizeof(Tag));
     funcs = calloc(1, sizeof(Function));
 
     // header file内のfuncはここでfuncsに追加する。
@@ -266,6 +300,12 @@ Obj *program()
         Type *base_type = declspec();
         if (!base_type)
             error_at(token->str, "存在しない型です。in parse.c program()");
+
+        if (!equal_tok("*", token) && token->kind != TK_IDENT)
+        {
+            expect_punct(";");
+            continue;
+        }
         Type *ty = declarator(base_type);
 
         if (consume_punct("("))
@@ -281,6 +321,7 @@ Obj *program()
             Obj *global_var = global_variable(ty, ty->name);
             global_var->next = globals;
             globals = global_var;
+            expect_punct(";");
         }
     }
 
@@ -288,13 +329,12 @@ Obj *program()
     return globals;
 }
 
-// globale-variable = type_suffix ";"
+// globale-variable = type_suffix
 Obj *global_variable(Type *ty, Token *tok_ident)
 {
     Obj *gvar;
     ty = type_suffix(ty);
     gvar = new_gvar(tok_ident, ty);
-    expect_punct(";");
     return gvar;
 }
 
@@ -346,7 +386,7 @@ Obj *function_def(Type *return_ty, Token *tok_ident)
 }
 
 // stmt = expr ";"
-//      | declspec declarator type_suffix ("=" expr )? ";"
+//      | declspec (declarator type_suffix ("=" expr )? )? ";"
 //      | "return" expr ";"
 //      | "if" "(" expr ")" stmt ("else" stmt)?
 //      | "while" "(" expr ")" stmt
@@ -363,6 +403,11 @@ Node *stmt()
         Node head = {};
         Node *cur = &head;
 
+        if (!equal_tok("*", token) && token->kind != TK_IDENT)
+        {
+            expect_punct(";");
+            return node;
+        }
         Type *ty = declarator(base_type);
         ty = type_suffix(ty);
 
@@ -860,6 +905,41 @@ Member *create_new_member(Type *ty, Member *mems)
     mem->offset = mems->offset + mems->size;
     mem->next = mems;
     return mem;
+}
+
+Tag *find_tag(char *name)
+{
+    /*
+    for (Tag *tag = local_tags; tag->name; tag = tag->next)
+    {
+        if (strlen(name) == strlen(tag->name) && !strncmp(name, tag->name, strlen(name)))
+            return tag;
+    }
+    */
+    for (Tag *tag = global_tags; tag->name; tag = tag->next)
+    {
+        if (strlen(name) == strlen(tag->name) && !strncmp(name, tag->name, strlen(name)))
+            return tag;
+    }
+    return NULL;
+}
+
+void *push_tag(Tag *tag)
+{
+    /*
+    if (is_global)
+    {
+        tag->next = global_tags;
+        global_tags = tag;
+    }
+    else
+    {
+        tag->next = local_tags;
+        local_tags = tag;
+    }
+    */
+    tag->next = global_tags;
+    global_tags = tag;
 }
 
 char *trim(char *s, int size_t)

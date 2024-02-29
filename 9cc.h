@@ -12,6 +12,7 @@ typedef struct Obj Obj;
 typedef struct Type Type;
 typedef struct Member Member;
 typedef struct Function Function;
+typedef struct Tag Tag;
 
 // TokenKind
 typedef enum
@@ -164,6 +165,13 @@ struct Member
     Member *next;
 };
 
+struct Tag
+{
+    Tag *next;
+    char *name;
+    Type *ty;
+};
+
 // generate
 void gen_function(Obj *func);
 void gen_gvar(Obj *gvar);
@@ -185,6 +193,7 @@ bool consume_punct(char *op);
 bool consume_keyword(char *op);
 Token *consume_ident();
 Token *consume_string();
+bool equal_tok(char *s, Token *tok);
 
 // trim
 char *trim(char *s, int size_t);
