@@ -15,6 +15,7 @@ static void leave_scope();
 static Type *declspec();
 static Type *declarator(Type *type);
 static Type *type_suffix(Type *ty);
+static Node *declaration();
 static Type *struct_decl();
 static Member *struct_members();
 static Obj *global_variable(Type *ty, Token *tok);
@@ -310,6 +311,45 @@ Type *type_suffix(Type *base_ty)
     return base_ty;
 }
 
+// declaration = declspec (declarator type_suffix ("=" expr )? )? ";"
+// only local declaration
+static Node *declaration()
+{
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_BLOCK;
+
+    Type *ty = declspec();
+
+    if (!equal_tok("*", token) && token->kind != TK_IDENT)
+    {
+        expect_punct(";");
+        node->body = NULL;
+        return node;
+    }
+
+    ty = type_suffix(declarator(ty));
+
+    Obj *lvar = find_var(ty->name);
+    if (lvar)
+    {
+        error_at(ty->name->str, "'%s'は既に使われている変数または配列名です。", trim(ty->name->str, ty->name->len));
+    }
+    lvar = new_lvar(ty->name, ty);
+    lvar->next = locals;
+    locals = lvar;
+
+    if (!consume_punct("="))
+    {
+        expect_punct(";");
+        node->body = NULL;
+        return node;
+    }
+
+    node->body = new_node_binary(ND_ASSIGN, new_node_var(calloc(1, sizeof(Node)), ty->name), expr());
+    expect_punct(";");
+    return node;
+}
+
 // program = ( declspec declarator "(" function-def | declspec (declarator global-variable)? ";" )*
 Obj *program()
 {
@@ -429,7 +469,7 @@ Obj *function_def(Type *return_ty, Token *tok_ident)
 }
 
 // stmt = expr ";"
-//      | declspec (declarator type_suffix ("=" expr )? )? ";"
+//      | declaration
 //      | "return" expr ";"
 //      | "if" "(" expr ")" stmt ("else" stmt)?
 //      | "while" "(" expr ")" stmt
@@ -438,38 +478,9 @@ Obj *function_def(Type *return_ty, Token *tok_ident)
 Node *stmt()
 {
     Node *node;
-    Type *base_type = declspec();
-    if (base_type)
+    if (equal_tok("int", token) || equal_tok("char", token) || equal_tok("struct", token))
     {
-        node = calloc(1, sizeof(Node));
-        node->kind = ND_BLOCK;
-        Node head = {};
-        Node *cur = &head;
-
-        if (!equal_tok("*", token) && token->kind != TK_IDENT)
-        {
-            expect_punct(";");
-            return node;
-        }
-        Type *ty = declarator(base_type);
-        ty = type_suffix(ty);
-
-        Obj *lvar = find_var(ty->name);
-        if (lvar)
-        {
-            error_at(ty->name->str, "'%s'は既に使われている変数または配列名です。", trim(ty->name->str, ty->name->len));
-        }
-        lvar = new_lvar(ty->name, ty);
-        node->var = lvar;
-        locals = lvar;
-
-        if (consume_punct("="))
-        {
-            cur = cur->next = new_node_binary(ND_ASSIGN, new_node_var(calloc(1, sizeof(Node)), ty->name), expr());
-        }
-        node->body = head.next;
-        expect_punct(";");
-        return node;
+        return declaration();
     }
     else if (consume_keyword("return"))
     {
