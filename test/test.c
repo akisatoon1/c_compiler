@@ -275,7 +275,11 @@ int f16()
     return x + y + z;
 }
 
-// 60
+// 67
+struct g
+{
+    int x;
+};
 int f17()
 {
     struct t
@@ -289,9 +293,11 @@ int f17()
         int b;
     } y;
     struct t x;
+    struct g z;
     y.a = y.b = 5;
     x.a = x.b = 6;
-    return x.a * y.a + x.b * y.b;
+    z.x = 7;
+    return x.a * y.a + x.b * y.b + z.x;
 }
 
 int main()
@@ -351,7 +357,7 @@ int main()
     assert(12, f14());                                                                    // 51
     assert(0, f15());                                                                     // 52
     assert(30, f16());                                                                    // 53
-    assert(60, f17());                                                                    // 54
+    assert(67, f17());                                                                    // 54
     if (error_num == 0)
         printf("OK\n");
     return 0;

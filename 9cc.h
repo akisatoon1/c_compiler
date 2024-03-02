@@ -12,7 +12,9 @@ typedef struct Obj Obj;
 typedef struct Type Type;
 typedef struct Member Member;
 typedef struct Function Function;
-typedef struct Tag Tag;
+typedef struct Scope Scope;
+typedef struct VarScope VarScope;
+typedef struct TagScope TagScope;
 
 // TokenKind
 typedef enum
@@ -165,11 +167,25 @@ struct Member
     Member *next;
 };
 
-struct Tag
+struct VarScope
 {
-    Tag *next;
+    VarScope *next;
+    char *name;
+    Obj *var;
+};
+
+struct TagScope
+{
+    TagScope *next;
     char *name;
     Type *ty;
+};
+
+struct Scope
+{
+    Scope *next;
+    VarScope *vars;
+    TagScope *tags;
 };
 
 // generate

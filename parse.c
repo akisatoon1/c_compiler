@@ -5,6 +5,12 @@ Function *funcs;
 static void new_func(char *name, Type *ty);
 Type *find_func(char *name);
 
+// scope
+static Scope *scope = &(Scope){};
+static void push_var_scope(Obj *var);
+static void enter_scope();
+static void leave_scope();
+
 // ebnf
 static Type *declspec();
 static Type *declarator(Type *type);
@@ -32,23 +38,19 @@ static Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs);
 static Node *new_node_add(Node *lhs, Node *rhs);
 static Node *new_node_sub(Node *lhs, Node *rhs);
 
-// create new variable
-static Obj *new_lvar(Token *tok, Type *ty);
-static Obj *new_gvar(Token *tok, Type *ty);
-
 // var
 static Obj *locals;
 static Obj *globals;
-static Obj *find_lvar(Token *tok);
-static Obj *find_gvar(Token *tok);
+static Obj *new_lvar(Token *tok, Type *ty);
+static Obj *new_gvar(Token *tok, Type *ty);
+static Obj *find_var(Token *tok);
 
-// struct
-static Tag *global_tags;
-// static Tag *local_tags;
-static Tag *find_tag(char *name);
-static void *push_tag(Tag *tag);
+// tag of struct
+static TagScope *find_tag(char *name);
+static TagScope *find_tag_of_now_scope(char *name);
+static void *push_tag(TagScope *tag);
 
-// member
+// member of struct
 static Member *create_new_member(Type *ty, Member *mems);
 static Member *find_member(Token *tok, Member *members);
 
@@ -59,6 +61,27 @@ static int align_to(int n, int align);
 int align_to(int n, int align)
 {
     return (n - 1 + align) / align * align;
+}
+
+static void enter_scope()
+{
+    Scope *sc = calloc(1, sizeof(Scope));
+    sc->next = scope;
+    scope = sc;
+}
+
+static void leave_scope()
+{
+    scope = scope->next;
+}
+
+static void push_var_scope(Obj *var)
+{
+    VarScope *sc = calloc(1, sizeof(VarScope));
+    sc->name = var->name;
+    sc->var = var;
+    sc->next = scope->vars;
+    scope->vars = sc;
 }
 
 void new_func(char *name, Type *ty)
@@ -114,27 +137,23 @@ Node *new_node_var(Node *node, Token *tok)
         error_at(token->str, "node is NULL in new_node_var");
     if (!tok)
         error_at(token->str, "tok is NULL in new_node_var");
-    Obj *lvar = find_lvar(tok);
-    if (lvar)
+    Obj *var = find_var(tok);
+
+    if (!var)
+        error_at(tok->str, "'%s'は宣言されていない変数名です。in parse.c new_node_var()", trim(tok->str, tok->len));
+    if (var->is_local)
     {
         node->kind = ND_LVAR;
-        node->var = lvar;
+        node->var = var;
         add_type(node);
         return node;
     }
     else
     {
-        Obj *gvar = find_gvar(tok);
-
-        if (gvar)
-        {
-            node->kind = ND_GVAR;
-            node->var = gvar;
-            add_type(node);
-            return node;
-        }
-        else
-            error_at(tok->str, "'%s'は宣言されていない変数名です。in parse.c new_node_var()", trim(tok->str, tok->len));
+        node->kind = ND_GVAR;
+        node->var = var;
+        add_type(node);
+        return node;
     }
 }
 
@@ -149,6 +168,8 @@ Obj *new_lvar(Token *tok, Type *ty)
     lvar->ty = ty;
     lvar->is_local = true;
     lvar->offset = locals->offset + ty->size;
+
+    push_var_scope(lvar);
 
     return lvar;
 }
@@ -165,6 +186,8 @@ Obj *new_gvar(Token *tok, Type *ty)
     gvar->ty = ty;
     gvar->is_local = false;
     gvar->is_function = false;
+
+    push_var_scope(gvar);
 
     return gvar;
 }
@@ -194,16 +217,15 @@ Type *struct_decl()
     Token *tok = consume_ident();
     if (tok)
     {
-        Tag *tag = find_tag(trim(tok->str, tok->len));
-        if (tag)
-        {
-            if (equal_tok("{", token))
-                error_at(token->str, "定義済みの構造体タグです。tag->name: %s", tag->name);
+        TagScope *tag = find_tag(trim(tok->str, tok->len));
+        TagScope *tag_of_now_sc = find_tag_of_now_scope(trim(tok->str, tok->len));
+        if (tag && !equal_tok("{", token))
             return tag->ty;
-        }
-        else
+        else if (!tag && !equal_tok("{", token))
+            error_at(token->str, "in parse.c struct-decl 宣言されていないタグです。");
+        else if (!tag_of_now_sc && equal_tok("{", token))
         {
-            tag = calloc(1, sizeof(Tag));
+            tag = calloc(1, sizeof(TagScope));
 
             expect_punct("{");
             Member *members = struct_members();
@@ -215,6 +237,10 @@ Type *struct_decl()
             push_tag(tag);
             return ty;
         }
+        else if (tag_of_now_sc && equal_tok("{", token))
+            error_at(token->str, "in parse.c struct-decl 宣言済みのタグです。 tag->name: %s", tag->name);
+        else
+            error_at(token->str, "in parse.c struct-decl error.");
     }
     else
     {
@@ -288,7 +314,6 @@ Type *type_suffix(Type *base_ty)
 Obj *program()
 {
     globals = calloc(1, sizeof(Obj));
-    global_tags = calloc(1, sizeof(Tag));
     funcs = calloc(1, sizeof(Function));
 
     // header file内のfuncはここでfuncsに追加する。
@@ -342,6 +367,7 @@ Obj *global_variable(Type *ty, Token *tok_ident)
 //          | declspec  declarator ("," declspec  declarator)* ")" "{" stmt* "}"
 Obj *function_def(Type *return_ty, Token *tok_ident)
 {
+    enter_scope();
     new_func(trim(tok_ident->str, tok_ident->len), return_ty);
 
     Obj *func = calloc(1, sizeof(Obj));
@@ -364,7 +390,7 @@ Obj *function_def(Type *return_ty, Token *tok_ident)
             error_at(token->str, "存在しない型です。parse.c:225");
         Type *ty = declarator(base_type);
 
-        Obj *lvar = find_lvar(ty->name);
+        Obj *lvar = find_var(ty->name);
         if (lvar)
         {
             error("既に使われているローカル変数です。");
@@ -379,8 +405,25 @@ Obj *function_def(Type *return_ty, Token *tok_ident)
     }
 
     func->params = locals; // params vector
-    func->body = stmt();
+    expect_punct("{");
+
+    Node head;
+    head.next = NULL;
+    Node *cur = &head;
+    while (!consume_punct("}"))
+    {
+        cur->next = stmt();
+        cur = cur->next;
+    }
+    cur->next = NULL;
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_BLOCK;
+    node->body = head.next;
+
+    func->body = node;
     func->stack_size = align_to(locals->offset, 16);
+
+    leave_scope();
 
     return func;
 }
@@ -411,7 +454,7 @@ Node *stmt()
         Type *ty = declarator(base_type);
         ty = type_suffix(ty);
 
-        Obj *lvar = find_lvar(ty->name);
+        Obj *lvar = find_var(ty->name);
         if (lvar)
         {
             error_at(ty->name->str, "'%s'は既に使われている変数または配列名です。", trim(ty->name->str, ty->name->len));
@@ -435,6 +478,7 @@ Node *stmt()
     }
     else if (consume_punct("{"))
     {
+        enter_scope();
         Node head;
         head.next = NULL;
         Node *cur = &head;
@@ -443,6 +487,7 @@ Node *stmt()
             cur->next = stmt();
             cur = cur->next;
         }
+        leave_scope();
         cur->next = NULL;
         node = calloc(1, sizeof(Node));
         node->kind = ND_BLOCK;
@@ -864,24 +909,15 @@ Type *find_func(char *name)
     error_at(token->str, "funcが見つかりません。in parse.c find_func");
 }
 
-Obj *find_lvar(Token *tok)
+Obj *find_var(Token *tok)
 {
-    for (Obj *var = locals; var->name; var = var->next)
+    for (Scope *sc = scope; sc; sc = sc->next)
     {
-        if (!strcmp(var->name, trim(tok->str, tok->len)))
-            return var;
-    }
-    return NULL;
-}
-
-Obj *find_gvar(Token *tok)
-{
-    for (Obj *var = globals; var->name; var = var->next)
-    {
-        if (var->is_function)
-            continue;
-        if (!strcmp(var->name, trim(tok->str, tok->len)))
-            return var;
+        for (VarScope *vars = sc->vars; vars; vars = vars->next)
+        {
+            if (!strcmp(vars->name, trim(tok->str, tok->len)))
+                return vars->var;
+        }
     }
     return NULL;
 }
@@ -907,16 +943,23 @@ Member *create_new_member(Type *ty, Member *mems)
     return mem;
 }
 
-Tag *find_tag(char *name)
+TagScope *find_tag(char *name)
 {
-    /*
-    for (Tag *tag = local_tags; tag->name; tag = tag->next)
+    for (Scope *sc = scope; sc; sc = sc->next)
     {
-        if (strlen(name) == strlen(tag->name) && !strncmp(name, tag->name, strlen(name)))
-            return tag;
+        for (TagScope *tag = sc->tags; tag; tag = tag->next)
+        {
+            if (strlen(name) == strlen(tag->name) && !strncmp(name, tag->name, strlen(name)))
+                return tag;
+        }
     }
-    */
-    for (Tag *tag = global_tags; tag->name; tag = tag->next)
+
+    return NULL;
+}
+
+static TagScope *find_tag_of_now_scope(char *name)
+{
+    for (TagScope *tag = scope->tags; tag; tag = tag->next)
     {
         if (strlen(name) == strlen(tag->name) && !strncmp(name, tag->name, strlen(name)))
             return tag;
@@ -924,22 +967,10 @@ Tag *find_tag(char *name)
     return NULL;
 }
 
-void *push_tag(Tag *tag)
+void *push_tag(TagScope *tag)
 {
-    /*
-    if (is_global)
-    {
-        tag->next = global_tags;
-        global_tags = tag;
-    }
-    else
-    {
-        tag->next = local_tags;
-        local_tags = tag;
-    }
-    */
-    tag->next = global_tags;
-    global_tags = tag;
+    tag->next = scope->tags;
+    scope->tags = tag;
 }
 
 char *trim(char *s, int size_t)
