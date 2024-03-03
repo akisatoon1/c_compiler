@@ -15,11 +15,12 @@ static void leave_scope();
 static Type *declspec();
 static Type *declarator(Type *type);
 static Type *type_suffix(Type *ty);
-static Node *declaration();
+static Node *declaration(); // only local declaration
 static Type *struct_decl();
 static Member *struct_members();
 static Obj *global_variable(Type *ty, Token *tok);
 static Obj *function_def(Type *ty, Token *tok);
+static Node *compound_stmt();
 static Node *stmt();
 static Node *expr();
 static Node *assign();
@@ -403,8 +404,8 @@ Obj *global_variable(Type *ty, Token *tok_ident)
     return gvar;
 }
 
-// function-def = ")" "{" stmt* "}"
-//          | declspec  declarator ("," declspec  declarator)* ")" "{" stmt* "}"
+// function-def = ")" "{" compound-stmt
+//          | declspec  declarator ("," declspec  declarator)* ")" "{" compound-stmt
 Obj *function_def(Type *return_ty, Token *tok_ident)
 {
     enter_scope();
@@ -447,20 +448,7 @@ Obj *function_def(Type *return_ty, Token *tok_ident)
     func->params = locals; // params vector
     expect_punct("{");
 
-    Node head;
-    head.next = NULL;
-    Node *cur = &head;
-    while (!consume_punct("}"))
-    {
-        cur->next = stmt();
-        cur = cur->next;
-    }
-    cur->next = NULL;
-    Node *node = calloc(1, sizeof(Node));
-    node->kind = ND_BLOCK;
-    node->body = head.next;
-
-    func->body = node;
+    func->body = compound_stmt();
     func->stack_size = align_to(locals->offset, 16);
 
     leave_scope();
@@ -468,13 +456,32 @@ Obj *function_def(Type *return_ty, Token *tok_ident)
     return func;
 }
 
+// compound_stmt = (declaration | stmt)* "}"
+static Node *compound_stmt()
+{
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_BLOCK;
+    Node head = {};
+    Node *cur = &head;
+
+    while (!consume_punct("}"))
+    {
+        if (equal_tok("int", token) || equal_tok("char", token) || equal_tok("struct", token))
+            cur = cur->next = declaration();
+        else
+            cur = cur->next = stmt();
+    }
+
+    node->body = head.next;
+    return node;
+}
+
 // stmt = expr ";"
 //      | declaration
 //      | "return" expr ";"
-//      | "if" "(" expr ")" stmt ("else" stmt)?
-//      | "while" "(" expr ")" stmt
-//      | "for" "(" expr? ";" expr? ";" expr? ")" stmt
-//      | "{" stmt* "}"
+//      | "if" "(" expr ")" ( stmt | "{" compound-stmt ) ("else" ( stmt | "{" compound-stmt ) )?
+//      | "while" "(" expr ")" ( stmt | "{" compound-stmt )
+//      | "for" "(" expr? ";" expr? ";" expr? ")" ( stmt | "{" compound-stmt )
 Node *stmt()
 {
     Node *node;
@@ -487,23 +494,6 @@ Node *stmt()
         node = new_node(ND_RETURN, expr());
         expect_punct(";");
     }
-    else if (consume_punct("{"))
-    {
-        enter_scope();
-        Node head;
-        head.next = NULL;
-        Node *cur = &head;
-        while (!consume_punct("}"))
-        {
-            cur->next = stmt();
-            cur = cur->next;
-        }
-        leave_scope();
-        cur->next = NULL;
-        node = calloc(1, sizeof(Node));
-        node->kind = ND_BLOCK;
-        node->body = head.next;
-    }
     else if (consume_keyword("if"))
     {
         expect_punct("(");
@@ -511,10 +501,24 @@ Node *stmt()
         node->kind = ND_IF;
         node->cond = expr();
         expect_punct(")");
-        node->then = stmt();
+        if (consume_punct("{"))
+        {
+            enter_scope();
+            node->then = compound_stmt();
+            leave_scope();
+        }
+        else
+            node->then = stmt();
         if (consume_keyword("else"))
         {
-            node->_else = stmt();
+            if (consume_punct("{"))
+            {
+                enter_scope();
+                node->_else = compound_stmt();
+                leave_scope();
+            }
+            else
+                node->_else = stmt();
         }
         else
         {
@@ -528,7 +532,14 @@ Node *stmt()
         node->kind = ND_WHILE;
         node->cond = expr();
         expect_punct(")");
-        node->then = stmt();
+        if (consume_punct("{"))
+        {
+            enter_scope();
+            node->then = compound_stmt();
+            leave_scope();
+        }
+        else
+            node->then = stmt();
     }
     else if (consume_keyword("for"))
     {
@@ -562,7 +573,14 @@ Node *stmt()
             node->inc = expr();
             expect_punct(")");
         }
-        node->then = stmt();
+        if (consume_punct("{"))
+        {
+            enter_scope();
+            node->then = compound_stmt();
+            leave_scope();
+        }
+        else
+            node->then = stmt();
     }
     else
     {
