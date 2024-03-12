@@ -333,6 +333,13 @@ void gen_expr(Node *node)
         load(node);
         printf("    push rax # value of member\n");
         return;
+    case ND_STMT_EXPR:
+        for (Node *n = node->body; n; n = n->next)
+        {
+            gen_stmt(n);
+        }
+        printf("    push rax # stmt-expr value\n");
+        return;
     default:
         break;
     }
