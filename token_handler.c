@@ -43,10 +43,8 @@ bool consume_punct(char *op)
 
 Token *consume_ident()
 {
-    if (token->kind != TK_IDENT || token->str[0] < 'a' || 'z' < token->str[0])
-    {
+    if (token->kind != TK_IDENT || !(('a' <= token->str[0] && token->str[0] <= 'z') || ('A' <= token->str[0] && token->str[0] <= 'Z') || token->str[0] == '_'))
         return NULL;
-    }
     Token *cur_token = token;
     token = token->next;
     return cur_token;

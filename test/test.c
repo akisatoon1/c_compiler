@@ -9,7 +9,7 @@
 // 何番目のテストかを表す数。最初は1
 int num;
 int error_num;
-int assert(int expected, int actual)
+int ASSERT(int expected, int actual) // 0
 {
     if (expected != actual)
     {
@@ -49,6 +49,11 @@ int addx(int *x, int y)
     return *x + y;
 }
 
+int sub_char(char a, char b, char c)
+{
+    return a - b - c;
+}
+
 int fib(int x)
 {
     if (x <= 1)
@@ -56,309 +61,224 @@ int fib(int x)
     return fib(x - 1) + fib(x - 2);
 }
 
-int f1(int x)
-{
-    int y = 5;
-    int *z = &y;
-    int **a = &z;
-    return x + *z + **a;
-}
-
-// 10
-int f2()
-{
-    int x[5];
-    int a = 0;
-    x[0] = 0;
-    x[1] = 1;
-    x[2] = 2;
-    x[3] = 3;
-    x[4] = 4;
-    int i;
-    for (i = 0; i < 5; i = i + 1)
-    {
-        a = a + x[i];
-    }
-    return a;
-}
-
-// 4
-int f3()
-{
-    char x = 4;
-    return x;
-}
-
-// 24
-int f4()
-{
-    int x[3];
-    *x = 0;
-    return sizeof(x) + sizeof(x + 1) + sizeof(*x);
-}
-
-// 10
-int g;
-int f5()
-{
-    int x;
-    x = 5;
-    g = 5;
-    return x + g;
-}
-
-// 5
-int f6()
-{
-    int a;
-    a = 0;
-    int i;
-    i = 0;
-    while (i < 5)
-    {
-        if (i < 3)
-            a += i;
-        else
-            a += 1;
-        i += 1;
-    }
-    return a;
-}
-
-// 3
-int f7()
-{
-    struct
-    {
-        char a;
-        int b;
-        char c;
-    } x;
-    x.a = 1;
-    x.b = 2;
-    x.c = 3;
-    return x.c;
-}
-
-// 40
-int f8()
-{
-    struct
-    {
-        int a[3];
-        int b[2];
-    } x[2];
-    return sizeof(x);
-}
-
-// 6
-int f9()
-{
-    struct
-    {
-        char a;
-        int b;
-        char c;
-    } x;
-    return sizeof(x);
-}
-
-// 17
-int f10()
-{
-    char x[5];
-    x[0] = 2;
-    x[1] = 6;
-    x[2] = 3;
-    x[3] = 7;
-    x[4] = 4;
-    return x[1] - x[2] + (x[3] * x[4]) / x[0];
-}
-
-// 5
-int f11()
-{
-    struct
-    {
-        struct
-        {
-            int b;
-        } a;
-    } x;
-    x.a.b = 5;
-    return x.a.b;
-}
-
-// 6
-int f12()
-{
-    int x[2][3];
-    x[0][0] = 0;
-    x[0][1] = 1;
-    x[0][2] = 2;
-    x[1][0] = 0;
-    x[1][1] = 1;
-    x[1][2] = 2;
-    int i;
-    int j;
-    int a;
-    a = 0;
-    for (i = 0; i < 2; i += 1)
-    {
-        for (j = 0; j < 3; j += 1)
-        {
-            a += x[i][j];
-        }
-    }
-    return a;
-}
-
-// x==0: 0
-// x==1: 1
-// x==2: 2
-int f13(int x)
-{
-    if (x)
-    {
-        if (x - 1)
-        {
-            return 2;
-        }
-        else
-        {
-            return 1;
-        }
-    }
-    else
-    {
-        return 0;
-    }
-}
-
-// 12
-int f14()
-{
-    int i = 0;
-    int j;
-    int a = 0;
-    while (i < 4)
-    {
-        j = 0;
-        while (j < 3)
-        {
-            a += 1;
-            ++j;
-        }
-        --i;
-        i += 2;
-    }
-    return a;
-}
-
-// 0
-int f15()
-{
-    int x = 0;
-    int y = 0;
-    int z = 0;
-    x = ++y + 5;
-    z = (--y - 1) * 6;
-    return x + y + z;
-}
-
-// 30
-int f16()
-{
-    int x = 6;
-    int y = x++;
-    int z = y-- * 3;
-    return x + y + z;
-}
-
-// 67
-struct g
-{
-    int x;
-};
-int f17()
-{
-    struct t
-    {
-        int a;
-        int b;
-    };
-    struct u
-    {
-        int a;
-        int b;
-    } y;
-    struct t x;
-    struct g z;
-    y.a = y.b = 5;
-    x.a = x.b = 6;
-    z.x = 7;
-    return x.a * y.a + x.b * y.b + z.x;
-}
+int g1;
+int g2[4];
 
 int main()
 {
     num = 1;
     error_num = 0;
-    assert(0, 0);                                                                         // 1
-    assert(42, 42);                                                                       // 2
-    assert(21, 5 + 20 - 4);                                                               // 3
-    assert(41, 12 + 34 - 5);                                                              // 4
-    assert(47, 5 + 6 * 7);                                                                // 5
-    assert(15, 5 * (9 - 6));                                                              // 6
-    assert(4, (3 + 5) / 2);                                                               // 7
-    assert(10, -10 + 20);                                                                 // 8
-    assert(10, - -10);                                                                    // 9
-    assert(10, - -+10);                                                                   // 10
-    assert(0, 0 == 1);                                                                    // 11
-    assert(1, 42 == 42);                                                                  // 12
-    assert(1, 0 != 1);                                                                    // 13
-    assert(0, 42 != 42);                                                                  // 14
-    assert(1, 0 < 1);                                                                     // 15
-    assert(0, 1 < 1);                                                                     // 16
-    assert(0, 2 < 1);                                                                     // 17
-    assert(1, 0 <= 1);                                                                    // 18
-    assert(1, 1 <= 1);                                                                    // 19
-    assert(0, 2 <= 1);                                                                    // 20
-    assert(1, 1 > 0);                                                                     // 21
-    assert(0, 1 > 1);                                                                     // 22
-    assert(0, 1 > 2);                                                                     // 23
-    assert(1, 1 >= 0);                                                                    // 24
-    assert(1, 1 >= 1);                                                                    // 25
-    assert(0, 1 >= 2);                                                                    // 26
-    assert(3, ret3());                                                                    // 27
-    assert(8, add2(3, 5));                                                                // 28
-    assert(2, sub2(5, 3));                                                                // 29
-    assert(21, add6(1, 2, 3, 4, 5, 6));                                                   // 30
-    assert(66, add6(1, 2, add6(3, 4, 5, 6, 7, 8), 9, 10, 11));                            // 31
-    assert(136, add6(1, 2, add6(3, add6(4, 5, 6, 7, 8, 9), 10, 11, 12, 13), 14, 15, 16)); // 32
-    assert(7, add2(3, 4));                                                                // 33
-    assert(1, sub2(4, 3));                                                                // 34
-    assert(55, fib(9));                                                                   // 35
-    assert(30, f1(20));                                                                   // 36
-    assert(10, f2());                                                                     // 37
-    assert(4, f3());                                                                      // 38
-    assert(24, f4());                                                                     // 39
-    assert(10, f5());                                                                     // 40
-    assert(5, f6());                                                                      // 41
-    assert(3, f7());                                                                      // 42
-    assert(40, f8());                                                                     // 43
-    assert(6, f9());                                                                      // 44
-    assert(17, f10());                                                                    // 45
-    assert(5, f11());                                                                     // 46
-    assert(6, f12());                                                                     // 47
-    assert(0, f13(0));                                                                    // 48
-    assert(1, f13(1));                                                                    // 49
-    assert(2, f13(2));                                                                    // 50
-    assert(12, f14());                                                                    // 51
-    assert(0, f15());                                                                     // 52
-    assert(30, f16());                                                                    // 53
-    assert(67, f17());                                                                    // 54
+    ASSERT(0, 0);            // 1
+    ASSERT(42, 42);          // 2
+    ASSERT(21, 5 + 20 - 4);  // 3
+    ASSERT(41, 12 + 34 - 5); // 4
+    ASSERT(47, 5 + 6 * 7);   // 5
+    ASSERT(15, 5 * (9 - 6)); // 6
+    ASSERT(4, (3 + 5) / 2);  // 7
+    ASSERT(10, -10 + 20);    // 8
+    ASSERT(10, - -10);       // 9
+    ASSERT(10, - -+10);      // 10
+
+    ASSERT(0, 0 == 1);   // 11
+    ASSERT(1, 42 == 42); // 12
+    ASSERT(1, 0 != 1);   // 13
+    ASSERT(0, 42 != 42); // 14
+
+    ASSERT(1, 0 < 1);  // 15
+    ASSERT(0, 1 < 1);  // 16
+    ASSERT(0, 2 < 1);  // 17
+    ASSERT(1, 0 <= 1); // 18
+    ASSERT(1, 1 <= 1); // 19
+    ASSERT(0, 2 <= 1); // 20
+
+    ASSERT(1, 1 > 0);  // 21
+    ASSERT(0, 1 > 1);  // 22
+    ASSERT(0, 1 > 2);  // 23
+    ASSERT(1, 1 >= 0); // 24
+    ASSERT(1, 1 >= 1); // 25
+    ASSERT(0, 1 >= 2); // 26
+
+    ASSERT(3, ({ int x; if (0) x=2; else x=3; x; })); // 27
+    ASSERT(3, ({ int x; if (1-1) x=2; else x=3; x; })); // 28
+    ASSERT(2, ({ int x; if (1) x=2; else x=3; x; })); // 29
+    ASSERT(2, ({ int x; if (2-1) x=2; else x=3; x; })); // 30
+
+    ASSERT(55, ({ int i=0; int j=0; for (i=0; i<=10; i=i+1) j=i+j; j; })); // 31
+
+    ASSERT(10, ({ int i=0; while(i<10) i=i+1; i; })); // 32
+
+    ASSERT(10, ({ int i=0; while(i<10) i=i+1; i; })); // 33
+    ASSERT(55, ({ int i=0; int j=0; while(i<=10) {j=i+j; i=i+1;} j; })); // 34
+
+    ASSERT(3, ret3());                                                                    // 35
+    ASSERT(8, add2(3, 5));                                                                // 36
+    ASSERT(2, sub2(5, 3));                                                                // 37
+    ASSERT(21, add6(1, 2, 3, 4, 5, 6));                                                   // 38
+    ASSERT(66, add6(1, 2, add6(3, 4, 5, 6, 7, 8), 9, 10, 11));                            // 39
+    ASSERT(136, add6(1, 2, add6(3, add6(4, 5, 6, 7, 8, 9), 10, 11, 12, 13), 14, 15, 16)); // 40
+
+    ASSERT(7, add2(3, 4)); // 41
+    ASSERT(1, sub2(4, 3)); // 42
+    ASSERT(55, fib(9));    // 43
+
+    ASSERT(1, ({ sub_char(7, 3, 3); })); // 44
+
+    ASSERT(3, ({ int x=3; *&x; })); // 45
+    ASSERT(3, ({ int x=3; int *y=&x; int **z=&y; **z; })); // 46
+    ASSERT(5, ({ int x=3; int y=5; *(&x-1); })); // 47
+    ASSERT(3, ({ int x=3; int y=5; *(&y+1); })); // 48
+    ASSERT(5, ({ int x=3; int y=5; *(&x-(-1)); })); // 49
+    ASSERT(5, ({ int x=3; int *y=&x; *y=5; x; })); // 50
+    ASSERT(7, ({ int x=3; int y=5; *(&x-1)=7; y; })); // 51
+    ASSERT(7, ({ int x=3; int y=5; *(&y+2-1)=7; x; })); // 52
+    ASSERT(5, ({ int x=3; (&x+2)-&x+3; })); // 53
+    ASSERT(8, ({ int x; int y; x=3; y=5; x+y; })); // 54
+    ASSERT(8, ({ int x=3; int y=5; x+y; })); // 55
+
+    ASSERT(3, ({ int x[2]; int *y=&x; *y=3; *x; })); // 56
+
+    ASSERT(3, ({ int x[3]; *x=3; *(x+1)=4; *(x+2)=5; *x; })); // 57
+    ASSERT(4, ({ int x[3]; *x=3; *(x+1)=4; *(x+2)=5; *(x+1); })); // 58
+    ASSERT(5, ({ int x[3]; *x=3; *(x+1)=4; *(x+2)=5; *(x+2); })); // 59
+
+    ASSERT(0, ({ int x[2][3]; int *y=x; *y=0; **x; })); // 60
+    ASSERT(1, ({ int x[2][3]; int *y=x; *(y+1)=1; *(*x+1); })); // 61
+    ASSERT(2, ({ int x[2][3]; int *y=x; *(y+2)=2; *(*x+2); })); // 62
+    ASSERT(3, ({ int x[2][3]; int *y=x; *(y+3)=3; **(x+1); })); // 63
+    ASSERT(4, ({ int x[2][3]; int *y=x; *(y+4)=4; *(*(x+1)+1); })); // 64
+    ASSERT(5, ({ int x[2][3]; int *y=x; *(y+5)=5; *(*(x+1)+2); })); // 65
+
+    ASSERT(3, ({ int x[3]; *x=3; x[1]=4; x[2]=5; *x; })); // 66
+    ASSERT(4, ({ int x[3]; *x=3; x[1]=4; x[2]=5; *(x+1); })); // 67
+    ASSERT(5, ({ int x[3]; *x=3; x[1]=4; x[2]=5; *(x+2); })); // 68
+    ASSERT(5, ({ int x[3]; *x=3; x[1]=4; x[2]=5; *(x+2); })); // 69
+    ASSERT(5, ({ int x[3]; *x=3; x[1]=4; 2[x]=5; *(x+2); })); // 70
+
+    ASSERT(0, ({ int x[2][3]; int *y=x; y[0]=0; x[0][0]; })); // 71
+    ASSERT(1, ({ int x[2][3]; int *y=x; y[1]=1; x[0][1]; })); // 72
+    ASSERT(2, ({ int x[2][3]; int *y=x; y[2]=2; x[0][2]; })); // 73
+    ASSERT(3, ({ int x[2][3]; int *y=x; y[3]=3; x[1][0]; })); // 74
+    ASSERT(4, ({ int x[2][3]; int *y=x; y[4]=4; x[1][1]; })); // 75
+    ASSERT(5, ({ int x[2][3]; int *y=x; y[5]=5; x[1][2]; })); // 76
+
+    ASSERT(1, ({ struct {int a; int b;} x; x.a=1; x.b=2; x.a; })); // 77
+    ASSERT(2, ({ struct {int a; int b;} x; x.a=1; x.b=2; x.b; })); // 78
+    ASSERT(1, ({ struct {char a; int b; char c;} x; x.a=1; x.b=2; x.c=3; x.a; })); // 79
+    ASSERT(2, ({ struct {char a; int b; char c;} x; x.b=1; x.b=2; x.c=3; x.b; })); // 80
+    ASSERT(3, ({ struct {char a; int b; char c;} x; x.a=1; x.b=2; x.c=3; x.c; })); // 81
+
+    ASSERT(0, ({ struct {char a; char b;} x[3]; char *p=x; p[0]=0; x[0].a; })); // 82
+    ASSERT(1, ({ struct {char a; char b;} x[3]; char *p=x; p[1]=1; x[0].b; })); // 83
+    ASSERT(2, ({ struct {char a; char b;} x[3]; char *p=x; p[2]=2; x[1].a; })); // 84
+    ASSERT(3, ({ struct {char a; char b;} x[3]; char *p=x; p[3]=3; x[1].b; })); // 85
+
+    ASSERT(6, ({ struct {char a[3]; char b[5];} x; char *p=&x; x.a[0]=6; p[0]; })); // 86
+    ASSERT(7, ({ struct {char a[3]; char b[5];} x; char *p=&x; x.b[0]=7; p[3]; })); // 87
+
+    ASSERT(6, ({ struct { struct { char b; } a; } x; x.a.b=6; x.a.b; })); // 88
+
+    ASSERT(4, ({ struct {int a;} x; sizeof(x); }));  // 89
+    ASSERT(8, ({ struct {int a; int b;} x; sizeof(x); }));  // 90
+    ASSERT(8, ({ struct {int a; int b;} x; sizeof(x); }));  // 91
+    ASSERT(12, ({ struct {int a[3];} x; sizeof(x); })); // 92
+    ASSERT(16, ({ struct {int a;} x[4]; sizeof(x); })); // 93
+    ASSERT(24, ({ struct {int a[3];} x[2]; sizeof(x); })); // 94
+    ASSERT(2, ({ struct {char a; char b;} x; sizeof(x); }));  // 95
+    ASSERT(0, ({ struct {} x; sizeof(x); }));  // 96
+    ASSERT(5, ({ struct {char a; int b;} x; sizeof(x); }));  // 97
+    ASSERT(5, ({ struct {int a; char b;} x; sizeof(x); }));  // 98
+
+    ASSERT(8, ({ struct t {int a; int b;} x; struct t y; sizeof(y); })); // 99
+    ASSERT(8, ({ struct t {int a; int b;}; struct t y; sizeof(y); })); // 100
+    ASSERT(2, ({ struct t {char a[2];}; { struct t {char a[4];}; } struct t y; sizeof(y); })); // 101
+    ASSERT(3, ({ struct t {int x;}; int t=1; struct t y; y.x=2; t+y.x; })); // 102
+
+    ASSERT(3, ({ int a; a=3; a; })); // 103
+    ASSERT(3, ({ int a=3; a; })); // 104
+    ASSERT(8, ({ int a=3; int z=5; a+z; })); // 105
+
+    ASSERT(3, ({ int a=3; a; })); // 106
+    ASSERT(8, ({ int a=3; int z=5; a+z; })); // 107
+    ASSERT(6, ({ int a; int b; a=b=3; a+b; })); // 108
+    ASSERT(3, ({ int foo=3; foo; })); // 109
+    ASSERT(8, ({ int foo123=3; int bar=5; foo123+bar; })); // 110
+
+    ASSERT(4, ({ int x; sizeof(x); }));  // 111
+    ASSERT(4, ({ int x; sizeof x; }));  // 112
+    ASSERT(8, ({ int *x; sizeof(x); }));  // 113
+    ASSERT(16, ({ int x[4]; sizeof(x); })); // 114
+    ASSERT(48, ({ int x[3][4]; sizeof(x); })); // 115
+    ASSERT(16, ({ int x[3][4]; sizeof(*x); })); // 116
+    ASSERT(4, ({ int x[3][4]; sizeof(**x); }));  // 117
+    ASSERT(5, ({ int x[3][4]; sizeof(**x) + 1; }));  // 118
+    ASSERT(5, ({ int x[3][4]; sizeof **x + 1; }));  // 119
+    ASSERT(4, ({ int x[3][4]; sizeof(**x + 1); }));  // 120
+    ASSERT(4, ({ int x=1; sizeof(x=2); }));  // 121
+    ASSERT(1, ({ int x=1; sizeof(x=2); x; }));  // 122
+
+    ASSERT(0, g1);    // 123//123
+    ASSERT(3, ({ g1=3; g1; })); // 124//124
+    ASSERT(0, ({ g2[0]=0; g2[1]=1; g2[2]=2; g2[3]=3; g2[0]; })); // 125
+    ASSERT(1, ({ g2[0]=0; g2[1]=1; g2[2]=2; g2[3]=3; g2[1]; })); // 126
+    ASSERT(2, ({ g2[0]=0; g2[1]=1; g2[2]=2; g2[3]=3; g2[2]; })); // 127
+    ASSERT(3, ({ g2[0]=0; g2[1]=1; g2[2]=2; g2[3]=3; g2[3]; })); // 128
+
+    ASSERT(4, sizeof(g1));  // 129
+    ASSERT(16, sizeof(g2)); // 130
+
+    ASSERT(1, ({ char x=1; x; })); // 131
+    ASSERT(1, ({ char x=1; char y=2; x; })); // 132
+    ASSERT(2, ({ char x=1; char y=2; y; })); // 133
+
+    ASSERT(1, ({ char x; sizeof(x); }));  // 134
+    ASSERT(10, ({ char x[10]; sizeof(x); })); // 135
+
+    ASSERT(2, ({ int x=2; { int x=3; } x; })); // 136
+    ASSERT(2, ({ int x=2; { int x=3; } int y=4; x; })); // 137
+    ASSERT(3, ({ int x=2; { x=3; } x; })); // 138
+
+    ASSERT(1, ({ int x; int y; char z; char *a=&y; char *b=&z; a-b; })); // 139
+    ASSERT(4, ({ int x; char y; int z; char *a=&y; char *b=&z; a-b; })); // 140
+
+    ASSERT(0, ""[0]);      // 141
+    ASSERT(1, sizeof("")); // 142
+
+    ASSERT(97, "abc"[0]);     // 143
+    ASSERT(98, "abc"[1]);     // 144
+    ASSERT(99, "abc"[2]);     // 145
+    ASSERT(0, "abc"[3]);      // 146
+    ASSERT(4, sizeof("abc")); // 147
+
+    /*
+    ASSERT(7, "\a"[0]);
+    ASSERT(8, "\b"[0]);
+    ASSERT(9, "\t"[0]);
+    ASSERT(10, "\n"[0]);
+    ASSERT(11, "\v"[0]);
+    ASSERT(12, "\f"[0]);
+    ASSERT(13, "\r"[0]);
+    ASSERT(27, "\e"[0]);
+
+    ASSERT(106, "\j"[0]);
+    ASSERT(107, "\k"[0]);
+    ASSERT(108, "\l"[0]);
+
+    ASSERT(7, "\ax\ny"[0]);
+    ASSERT(120, "\ax\ny"[1]);
+    ASSERT(10, "\ax\ny"[2]);
+    ASSERT(121, "\ax\ny"[3]);
+
+    ASSERT(0, "\0"[0]);
+    ASSERT(16, "\20"[0]);
+    ASSERT(65, "\101"[0]);
+    ASSERT(104, "\1500"[0]);
+    ASSERT(0, "\x00"[0]);
+    ASSERT(119, "\x77"[0]);
+    */
+
     if (error_num == 0)
         printf("OK\n");
+    else
+        printf("\nthe number of error is %d\n", error_num);
     return 0;
 }

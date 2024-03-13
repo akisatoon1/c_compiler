@@ -127,6 +127,7 @@ typedef enum
     ND_ADDR,     // &
     ND_STRING,   // string literal
     ND_MEMBER,   // member
+    ND_STMT_EXPR // statement expression
 } NodeKind;
 
 struct Node

@@ -46,6 +46,7 @@ static Obj *globals;
 static Obj *new_lvar(Token *tok, Type *ty);
 static Obj *new_gvar(Token *tok, Type *ty);
 static Obj *find_var(Token *tok);
+static Obj *find_var_of_now_scope(Token *tok);
 
 // tag of struct
 static TagScope *find_tag(char *name);
@@ -99,7 +100,7 @@ void new_func(char *name, Type *ty)
 Node *new_node(NodeKind kind, Node *lhs)
 {
     if (!lhs)
-        error_at(token->str, "lhs is NULL in new_node_binary");
+        error_at(token->str, "lhs is NULL in new_node");
     Node *node = calloc(1, sizeof(Node));
     node->kind = kind;
     node->lhs = lhs;
@@ -139,6 +140,8 @@ Node *new_node_var(Node *node, Token *tok)
         error_at(token->str, "node is NULL in new_node_var");
     if (!tok)
         error_at(token->str, "tok is NULL in new_node_var");
+    if (tok->kind != TK_IDENT)
+        error_at(token->str, "識別子ではありません。in parse.c new_node_var()");
     Obj *var = find_var(tok);
 
     if (!var)
@@ -330,12 +333,11 @@ static Node *declaration()
 
     ty = type_suffix(declarator(ty));
 
-    Obj *lvar = find_var(ty->name);
-    if (lvar)
+    if (find_var_of_now_scope(ty->name))
     {
         error_at(ty->name->str, "'%s'は既に使われている変数または配列名です。", trim(ty->name->str, ty->name->len));
     }
-    lvar = new_lvar(ty->name, ty);
+    Obj *lvar = new_lvar(ty->name, ty);
     lvar->next = locals;
     locals = lvar;
 
@@ -431,14 +433,13 @@ Obj *function_def(Type *return_ty, Token *tok_ident)
             error_at(token->str, "存在しない型です。parse.c:225");
         Type *ty = declarator(base_type);
 
-        Obj *lvar = find_var(ty->name);
-        if (lvar)
+        if (find_var_of_now_scope(ty->name))
         {
             error("既に使われているローカル変数です。");
         }
         else
         {
-            lvar = new_lvar(ty->name, ty);
+            Obj *lvar = new_lvar(ty->name, ty);
             locals = lvar;
         }
 
@@ -478,6 +479,7 @@ static Node *compound_stmt()
 
 // stmt = expr ";"
 //      | declaration
+//      | "{" compound-stmt ";"
 //      | "return" expr ";"
 //      | "if" "(" expr ")" ( stmt | "{" compound-stmt ) ("else" ( stmt | "{" compound-stmt ) )?
 //      | "while" "(" expr ")" ( stmt | "{" compound-stmt )
@@ -488,6 +490,13 @@ Node *stmt()
     if (equal_tok("int", token) || equal_tok("char", token) || equal_tok("struct", token))
     {
         return declaration();
+    }
+    else if (consume_punct("{"))
+    {
+        enter_scope();
+        node = compound_stmt();
+        leave_scope();
+        return node;
     }
     else if (consume_keyword("return"))
     {
@@ -585,6 +594,7 @@ Node *stmt()
     else
     {
         node = expr();
+        add_type(node);
         expect_punct(";");
     }
     return node;
@@ -799,11 +809,12 @@ Node *unary()
     }
     if (consume_punct("&"))
     {
+        Token *tok = token;
         Node *node = calloc(1, sizeof(Node));
         node->lhs = unary();
 
         if (node->lhs->ty->kind == TY_ARRAY)
-            return new_node_var(node, token);
+            return new_node_var(node, tok);
 
         node->kind = ND_ADDR;
         add_type(node);
@@ -869,7 +880,8 @@ Node *postfix()
     }
 }
 
-// primary = "(" expr ")"
+// primary = "( "{" compound-stmt )"
+//         | "(" expr ")"
 //         | ident "(" ( expr ("," expr)* )? ")"
 //         | num
 //         | string
@@ -877,11 +889,24 @@ Node *primary()
 {
     if (consume_punct("("))
     {
-        Node *node = expr();
-        expect_punct(")");
-
-        add_type(node);
-        return node;
+        if (consume_punct("{"))
+        {
+            Node *node = calloc(1, sizeof(Node));
+            node->kind = ND_STMT_EXPR;
+            enter_scope();
+            node->body = compound_stmt()->body;
+            leave_scope();
+            expect_punct(")");
+            add_type(node);
+            return node;
+        }
+        else
+        {
+            Node *node = expr();
+            expect_punct(")");
+            add_type(node);
+            return node;
+        }
     }
     Token *tok = consume_ident();
     if (tok)
@@ -918,7 +943,7 @@ Node *primary()
         node->kind = ND_STRING;
         node->str = trim(tok->str, tok->len);
 
-        Type *ty = pointer_to(ty_char);
+        Type *ty = array_of(ty_char, tok->len + 1);
         node->ty = ty;
 
         add_type(node);
@@ -940,6 +965,8 @@ Type *find_func(char *name)
 
 Obj *find_var(Token *tok)
 {
+    if (tok->kind != TK_IDENT)
+        error_at(token->str, "識別子ではありません。in parse.c find_var()");
     for (Scope *sc = scope; sc; sc = sc->next)
     {
         for (VarScope *vars = sc->vars; vars; vars = vars->next)
@@ -947,6 +974,16 @@ Obj *find_var(Token *tok)
             if (!strcmp(vars->name, trim(tok->str, tok->len)))
                 return vars->var;
         }
+    }
+    return NULL;
+}
+
+static Obj *find_var_of_now_scope(Token *tok)
+{
+    for (VarScope *vars = scope->vars; vars; vars = vars->next)
+    {
+        if (!strcmp(vars->name, trim(tok->str, tok->len)))
+            return vars->var;
     }
     return NULL;
 }

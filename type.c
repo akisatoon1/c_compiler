@@ -48,8 +48,6 @@ void add_type(Node *node)
     {
     case ND_ADD:
     case ND_SUB:
-    case ND_MUL:
-    case ND_DIV:
         if (node->lhs->ty->kind == TY_ARRAY)
         {
             node->ty = pointer_to(node->lhs->ty->ptr_to);
@@ -58,6 +56,8 @@ void add_type(Node *node)
         node->ty = node->lhs->ty;
         return;
 
+    case ND_MUL:
+    case ND_DIV:
     case ND_EQ:
     case ND_NE:
     case ND_LT:
@@ -96,6 +96,17 @@ void add_type(Node *node)
     case ND_FUNCCALL:
         node->ty = find_func(node->funcname);
         return;
+
+    case ND_STMT_EXPR:
+        if (node->body)
+        {
+            Node *stmt = node->body;
+            while (stmt->next)
+                stmt = stmt->next;
+            node->ty = stmt->ty;
+            return;
+        }
+        error_at(token->str, "body is not found. in type.c add_type()");
 
     default:
         error_at(token->str, "%d is not expected NodeKind in type.c add_type()");
