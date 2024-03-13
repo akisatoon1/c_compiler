@@ -943,7 +943,7 @@ Node *primary()
         node->kind = ND_STRING;
         node->str = trim(tok->str, tok->len);
 
-        Type *ty = pointer_to(ty_char);
+        Type *ty = array_of(ty_char, tok->len + 1);
         node->ty = ty;
 
         add_type(node);
