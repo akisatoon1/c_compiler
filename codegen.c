@@ -8,6 +8,10 @@ static int LwhileEnd = 0;
 static int LifEnd = 0;
 static int LelseBegin = 0;
 static int LC = 0; // string
+static int LandFalse = 0;
+static int LandEnd = 0;
+static int LorTrue = 0;
+static int LorEnd = 0;
 
 // registers
 char *argreg_64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
@@ -340,6 +344,38 @@ void gen_expr(Node *node)
         }
         printf("    push rax # stmt-expr value\n");
         return;
+    case ND_AND:
+        gen_expr(node->lhs);
+        printf("    pop rax # condition\n");
+        printf("    cmp rax, 0\n");
+        printf("    je .LandFalse%d\n", LandFalse);
+        int tmp_false = LandFalse++;
+        gen_expr(node->rhs);
+        printf("    pop rax # condition\n");
+        printf("    cmp rax, 0\n");
+        printf("    je .LandFalse%d\n", tmp_false);
+        printf("    push 1\n");
+        printf("    jmp .LandEnd%d\n", LandEnd);
+        printf(".LandFalse%d:\n", tmp_false);
+        printf("    push 0\n");
+        printf(".LandEnd%d:\n", LandEnd++);
+        return;
+    case ND_OR:
+        gen_expr(node->lhs);
+        printf("    pop rax # condition\n");
+        printf("    cmp rax, 0\n");
+        printf("    jne .LorTrue%d\n", LorTrue);
+        int tmp_true = LorTrue++;
+        gen_expr(node->rhs);
+        printf("    pop rax # condition\n");
+        printf("    cmp rax, 0\n");
+        printf("    jne .LorTrue%d\n", tmp_true);
+        printf("    push 0\n");
+        printf("    jmp .LorEnd%d\n", LorEnd);
+        printf(".LorTrue%d:\n", tmp_true);
+        printf("    push 1\n");
+        printf(".LorEnd%d:\n", LorEnd++);
+        return;
     default:
         break;
     }
@@ -386,7 +422,7 @@ void gen_expr(Node *node)
         printf("    movzb rax, al\n");
         break;
     default:
-        break;
+        error_at(token->str, "not found node kind. in codegen.c: gen_expr()");
     }
 
     printf("    push rax\n");
