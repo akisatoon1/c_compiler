@@ -59,6 +59,10 @@ int main()
     ASSERT(1, 1 >= 1); // 25
     ASSERT(0, 1 >= 2); // 26
 
+    ASSERT(0, 0 && 1);       // 27
+    ASSERT(0, (2 - 2) && 5); // 28
+    ASSERT(1, 1 && 5);       // 29
+
     if (error_num == 0)
         printf("OK\n");
     else
