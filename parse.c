@@ -24,6 +24,7 @@ static Node *compound_stmt();
 static Node *stmt();
 static Node *expr();
 static Node *assign();
+static Node *or_expr();
 static Node *and_expr();
 static Node *equality();
 static Node *relational();
@@ -607,10 +608,10 @@ Node *expr()
     return assign();
 }
 
-// assign = AND-exor ( ("=" | "+=" | "-=") assign)?
+// assign = or-expr ( ("=" | "+=" | "-=") assign)?
 Node *assign()
 {
-    Node *node = and_expr();
+    Node *node = or_expr();
     if (consume_punct("="))
     {
         node = new_node_binary(ND_ASSIGN, node, assign());
@@ -626,6 +627,16 @@ Node *assign()
         node = new_node_binary(ND_ASSIGN, node, new_node_sub(node, assign()));
     }
 
+    add_type(node);
+    return node;
+}
+
+// or-expr = and-expr ("||" and-expr)*
+Node *or_expr()
+{
+    Node *node = and_expr();
+    while (consume_punct("||"))
+        node = new_node_binary(ND_OR, node, and_expr());
     add_type(node);
     return node;
 }

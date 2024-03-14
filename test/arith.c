@@ -63,6 +63,11 @@ int main()
     ASSERT(0, (2 - 2) && 5); // 28
     ASSERT(1, 1 && 5);       // 29
 
+    ASSERT(1, 0 || 1);
+    ASSERT(1, 0 || (2 - 2) || 5);
+    ASSERT(0, 0 || 0);
+    ASSERT(0, 0 || (2 - 2));
+
     if (error_num == 0)
         printf("OK\n");
     else

@@ -2,7 +2,7 @@
 
 // keyword
 char *keywords[] = {"return", "if", "else", "while", "for", "int", "char", "sizeof", "struct"};
-char *long_puncts[] = {">=", "<=", "==", "!=", "+=", "-=", "++", "--", "&&"};
+char *long_puncts[] = {">=", "<=", "==", "!=", "+=", "-=", "++", "--", "&&", "||"};
 
 static bool is_keyword(char *p, char *s);
 static bool is_alnum(char c);
