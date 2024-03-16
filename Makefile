@@ -7,8 +7,11 @@ OBJS=$(SRCS:.c=.o)
 
 $(OBJS): 9cc.h
 
-test: 9cc
+test: 9cc link.o
 	./test.sh
+
+link.o: ./link/link.c
+	gcc -c ./link/link.c
 
 cc: 9cc
 	./cc.sh

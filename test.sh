@@ -9,7 +9,7 @@ test[6]="./test/variable.c"
 for file in ${test[@]}
 do
     ./9cc ${file} > tmp.s
-    gcc -c ./tmp.s ./link/link.c
+    gcc -c ./tmp.s
     gcc tmp.o link.o -o tmp
     ./tmp
 done
