@@ -481,7 +481,7 @@ static Node *compound_stmt()
 
 // stmt = expr ";"
 //      | declaration
-//      | "{" compound-stmt ";"
+//      | "{" compound-stmt
 //      | "return" expr ";"
 //      | "if" "(" expr ")" ( stmt | "{" compound-stmt ) ("else" ( stmt | "{" compound-stmt ) )?
 //      | "while" "(" expr ")" ( stmt | "{" compound-stmt )
