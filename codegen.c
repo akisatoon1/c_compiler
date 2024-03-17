@@ -1,17 +1,8 @@
 #include "9cc.h"
 
 // ラベルid
-static int LforBegin = 0;
-static int LforEnd = 0;
-static int LwhileBegin = 0;
-static int LwhileEnd = 0;
-static int LifEnd = 0;
-static int LelseBegin = 0;
+static int unique_label_num = 0;
 static int LC = 0; // string
-static int LandFalse = 0;
-static int LandEnd = 0;
-static int LorTrue = 0;
-static int LorEnd = 0;
 
 // registers
 char *argreg_64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
@@ -96,36 +87,36 @@ void gen_if(Node *node)
     printf("    pop rax # if condition\n");
     printf("    cmp rax, 0\n");
 
-    printf("    je .LelseBegin%d\n", LelseBegin);
-    int tmp_begin = LelseBegin++;
+    printf("    je .L%d\n", unique_label_num);
+    int tmp_begin = unique_label_num++;
     gen_stmt(node->then);
 
-    printf("    jmp .LifEnd%d\n", LifEnd);
-    int tmp_end = LifEnd++;
+    printf("    jmp .L%d\n", unique_label_num);
+    int tmp_end = unique_label_num++;
 
-    printf(".LelseBegin%d:\n", tmp_begin);
+    printf(".L%d:\n", tmp_begin);
     if (node->_else)
         gen_stmt(node->_else);
 
-    printf(".LifEnd%d:\n", tmp_end);
+    printf(".L%d:\n", tmp_end);
     printf("# if end\n");
 }
 
 void gen_while(Node *node)
 {
     printf("# while begin\n");
-    printf(".LwhileBegin%d:\n", LwhileBegin);
-    int tmp_begin = LwhileBegin++;
+    printf(".L%d:\n", unique_label_num);
+    int tmp_begin = unique_label_num++;
     gen_expr(node->cond);
     printf("    pop rax # while condition\n");
     printf("    cmp rax, 0\n");
 
-    printf("    je .LwhileEnd%d\n", LwhileEnd);
-    int tmp_end = LwhileEnd++;
+    printf("    je .L%d\n", unique_label_num);
+    int tmp_end = unique_label_num++;
     gen_stmt(node->then);
 
-    printf("    jmp .LwhileBegin%d\n", tmp_begin);
-    printf(".LwhileEnd%d:\n", tmp_end);
+    printf("    jmp .L%d\n", tmp_begin);
+    printf(".L%d:\n", tmp_end);
     printf("# while end\n");
 }
 
@@ -138,8 +129,8 @@ void gen_for(Node *node)
         printf("    pop rax\n");
     }
 
-    printf(".LforBegin%d:\n", LforBegin);
-    int tmp_begin = LforBegin++;
+    printf(".L%d:\n", unique_label_num);
+    int tmp_begin = unique_label_num++;
     if (node->cond)
     {
         gen_expr(node->cond);
@@ -151,8 +142,8 @@ void gen_for(Node *node)
     printf("    pop rax # for condition\n");
     printf("    cmp rax, 0\n");
 
-    printf("    je .LforEnd%d\n", LforEnd);
-    int tmp_end = LforEnd++;
+    printf("    je .L%d\n", unique_label_num);
+    int tmp_end = unique_label_num++;
     gen_stmt(node->then);
 
     if (node->inc)
@@ -160,8 +151,8 @@ void gen_for(Node *node)
         gen_expr(node->inc);
         printf("    pop rax\n");
     }
-    printf("    jmp .LforBegin%d\n", tmp_begin);
-    printf(".LforEnd%d:\n", tmp_end);
+    printf("    jmp .L%d\n", tmp_begin);
+    printf(".L%d:\n", tmp_end);
     printf("# for end\n");
 }
 
@@ -348,33 +339,33 @@ void gen_expr(Node *node)
         gen_expr(node->lhs);
         printf("    pop rax # condition\n");
         printf("    cmp rax, 0\n");
-        printf("    je .LandFalse%d\n", LandFalse);
-        int tmp_false = LandFalse++;
+        printf("    je .L%d\n", unique_label_num);
+        int tmp_false = unique_label_num++;
         gen_expr(node->rhs);
         printf("    pop rax # condition\n");
         printf("    cmp rax, 0\n");
-        printf("    je .LandFalse%d\n", tmp_false);
+        printf("    je .L%d\n", tmp_false);
         printf("    push 1\n");
-        printf("    jmp .LandEnd%d\n", LandEnd);
-        printf(".LandFalse%d:\n", tmp_false);
+        printf("    jmp .L%d\n", unique_label_num);
+        printf(".L%d:\n", tmp_false);
         printf("    push 0\n");
-        printf(".LandEnd%d:\n", LandEnd++);
+        printf(".L%d:\n", unique_label_num++);
         return;
     case ND_OR:
         gen_expr(node->lhs);
         printf("    pop rax # condition\n");
         printf("    cmp rax, 0\n");
-        printf("    jne .LorTrue%d\n", LorTrue);
-        int tmp_true = LorTrue++;
+        printf("    jne .L%d\n", unique_label_num);
+        int tmp_true = unique_label_num++;
         gen_expr(node->rhs);
         printf("    pop rax # condition\n");
         printf("    cmp rax, 0\n");
-        printf("    jne .LorTrue%d\n", tmp_true);
+        printf("    jne .L%d\n", tmp_true);
         printf("    push 0\n");
-        printf("    jmp .LorEnd%d\n", LorEnd);
-        printf(".LorTrue%d:\n", tmp_true);
+        printf("    jmp .L%d\n", unique_label_num);
+        printf(".L%d:\n", tmp_true);
         printf("    push 1\n");
-        printf(".LorEnd%d:\n", LorEnd++);
+        printf(".L%d:\n", unique_label_num++);
         return;
     default:
         break;
