@@ -1,7 +1,8 @@
 #include "9cc.h"
 
 // ラベルid
-static int unique_label_num = 0;
+// 常にuniqueな値を持つ
+int unique_label_num = 1;
 static int LC = 0; // string
 
 // registers
@@ -111,12 +112,11 @@ void gen_while(Node *node)
     printf("    pop rax # while condition\n");
     printf("    cmp rax, 0\n");
 
-    printf("    je .L%d\n", unique_label_num);
-    int tmp_end = unique_label_num++;
+    printf("    je .L%d\n", node->brk_label_num);
     gen_stmt(node->then);
 
     printf("    jmp .L%d\n", tmp_begin);
-    printf(".L%d:\n", tmp_end);
+    printf(".L%d:\n", node->brk_label_num);
     printf("# while end\n");
 }
 
@@ -142,8 +142,7 @@ void gen_for(Node *node)
     printf("    pop rax # for condition\n");
     printf("    cmp rax, 0\n");
 
-    printf("    je .L%d\n", unique_label_num);
-    int tmp_end = unique_label_num++;
+    printf("    je .L%d\n", node->brk_label_num);
     gen_stmt(node->then);
 
     if (node->inc)
@@ -152,7 +151,7 @@ void gen_for(Node *node)
         printf("    pop rax\n");
     }
     printf("    jmp .L%d\n", tmp_begin);
-    printf(".L%d:\n", tmp_end);
+    printf(".L%d:\n", node->brk_label_num);
     printf("# for end\n");
 }
 
@@ -219,6 +218,9 @@ void gen_stmt(Node *node)
         {
             gen_stmt(n);
         }
+        return;
+    case ND_GOTO:
+        printf("    jmp .L%d # goto\n", node->unique_label_num);
         return;
     default:
         gen_expr(node);

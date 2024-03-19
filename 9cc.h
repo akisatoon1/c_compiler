@@ -15,6 +15,7 @@ typedef struct Function Function;
 typedef struct Scope Scope;
 typedef struct VarScope VarScope;
 typedef struct TagScope TagScope;
+extern int unique_label_num;
 
 // TokenKind
 typedef enum
@@ -105,31 +106,32 @@ struct Obj
 // NodeKind
 typedef enum
 {
-    ND_ADD,      // +
-    ND_SUB,      // -
-    ND_MUL,      // *
-    ND_DIV,      // /
-    ND_AND,      // &&
-    ND_OR,       // ||
-    ND_EQ,       // ==
-    ND_NE,       // !=
-    ND_LT,       // <
-    ND_LE,       // <=
-    ND_ASSIGN,   // =
-    ND_LVAR,     // ローカル変数
-    ND_GVAR,     // global variable
-    ND_RETURN,   // return
-    ND_IF,       // if
-    ND_WHILE,    // while
-    ND_FOR,      // for
-    ND_BLOCK,    // stmts ex) {}
-    ND_FUNCCALL, // call function
-    ND_NUM,      // num literal
-    ND_DEREF,    // *
-    ND_ADDR,     // &
-    ND_STRING,   // string literal
-    ND_MEMBER,   // member
-    ND_STMT_EXPR // statement expression
+    ND_ADD,       // +
+    ND_SUB,       // -
+    ND_MUL,       // *
+    ND_DIV,       // /
+    ND_AND,       // &&
+    ND_OR,        // ||
+    ND_EQ,        // ==
+    ND_NE,        // !=
+    ND_LT,        // <
+    ND_LE,        // <=
+    ND_ASSIGN,    // =
+    ND_LVAR,      // ローカル変数
+    ND_GVAR,      // global variable
+    ND_RETURN,    // return
+    ND_IF,        // if
+    ND_WHILE,     // while
+    ND_FOR,       // for
+    ND_BLOCK,     // stmts ex) {}
+    ND_FUNCCALL,  // call function
+    ND_NUM,       // num literal
+    ND_DEREF,     // *
+    ND_ADDR,      // &
+    ND_STRING,    // string literal
+    ND_MEMBER,    // member
+    ND_STMT_EXPR, // statement expression
+    ND_GOTO       // break, continue
 } NodeKind;
 
 struct Node
@@ -159,6 +161,12 @@ struct Node
     Obj *var;       // Used if kind == ND_LVAR/ND_GVAR
     char *str;      // Used if kind == ND_STRING
     Member *member; // Used if kind == ND_STRUCT
+
+    // goto
+    int unique_label_num;
+
+    // iterator(for, while)
+    int brk_label_num;
 };
 
 struct Member

@@ -11,6 +11,11 @@ static void push_var_scope(Obj *var);
 static void enter_scope();
 static void leave_scope();
 
+// label num
+// 0はlabel_numに使わない。
+// 0のときはイテレータのどのスコープにも属していないことを示す。
+static int brk_label_num = 0;
+
 // ebnf
 static Type *declspec();
 static Type *declarator(Type *type);
@@ -481,6 +486,7 @@ static Node *compound_stmt()
 
 // stmt = expr ";"
 //      | declaration
+//      | break ";"
 //      | "{" compound-stmt
 //      | "return" expr ";"
 //      | "if" "(" expr ")" ( stmt | "{" compound-stmt ) ("else" ( stmt | "{" compound-stmt ) )?
@@ -492,6 +498,16 @@ Node *stmt()
     if (equal_tok("int", token) || equal_tok("char", token) || equal_tok("struct", token))
     {
         return declaration();
+    }
+    else if (consume_keyword("break"))
+    {
+        expect_punct(";");
+        if (!brk_label_num)
+            error_at(token->str, "イテレータまたはswitch文の中で使用してください。");
+        node = calloc(1, sizeof(Node));
+        node->kind = ND_GOTO;
+        node->unique_label_num = brk_label_num;
+        return node;
     }
     else if (consume_punct("{"))
     {
@@ -543,6 +559,10 @@ Node *stmt()
         node->kind = ND_WHILE;
         node->cond = expr();
         expect_punct(")");
+
+        int brk = brk_label_num;
+        brk_label_num = unique_label_num++;
+        node->brk_label_num = brk_label_num;
         if (consume_punct("{"))
         {
             enter_scope();
@@ -551,6 +571,7 @@ Node *stmt()
         }
         else
             node->then = stmt();
+        brk_label_num = brk;
     }
     else if (consume_keyword("for"))
     {
@@ -584,6 +605,10 @@ Node *stmt()
             node->inc = expr();
             expect_punct(")");
         }
+
+        int brk = brk_label_num;
+        brk_label_num = unique_label_num++;
+        node->brk_label_num = brk_label_num;
         if (consume_punct("{"))
         {
             enter_scope();
@@ -592,6 +617,7 @@ Node *stmt()
         }
         else
             node->then = stmt();
+        brk_label_num = brk;
     }
     else
     {

@@ -1,7 +1,7 @@
 #include "9cc.h"
 
 // keyword
-char *keywords[] = {"return", "if", "else", "while", "for", "int", "char", "sizeof", "struct"};
+char *keywords[] = {"return", "if", "else", "while", "for", "int", "char", "sizeof", "struct", "break"};
 char *long_puncts[] = {">=", "<=", "==", "!=", "+=", "-=", "++", "--", "&&", "||"};
 
 static bool is_keyword(char *p, char *s);
